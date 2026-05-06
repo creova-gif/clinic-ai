@@ -4,7 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "dev": "vite",
     "build": "vite build",
+    "preview": "vite preview",
     "test": "echo 'Run npm run test:all for complete test suite'",
     "test:all": "node src/app/tests/TestOrchestrator.ts all",
     "test:watch": "jest --watch",
@@ -91,7 +93,6 @@
     "notify:moh-team": "node scripts/notifyMoHTeam.js",
     "server:test": "vite --mode test",
     "smoke:production": "echo 'Run production smoke tests'",
-    "dev": "vite"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
