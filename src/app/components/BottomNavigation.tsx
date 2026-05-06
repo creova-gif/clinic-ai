@@ -1,20 +1,11 @@
 import React from 'react';
-import { Home, Activity, Calendar, User } from 'lucide-react';
+import { Home, Pill, Calendar, User } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useApp } from '@/app/context/AppContext';
 
 const translations = {
-  sw: {
-    home: 'Nyumbani',
-    symptoms: 'Dalili',
-    appointments: 'Miadi',
-    profile: 'Wasifu',
-  },
-  en: {
-    home: 'Home',
-    symptoms: 'Symptoms',
-    appointments: 'Appointments',
-    profile: 'Profile',
-  },
+  sw: { home: 'Nyumbani', medications: 'Dawa', appointments: 'Miadi', profile: 'Mimi' },
+  en: { home: 'Home', medications: 'Meds', appointments: 'Visits', profile: 'Me' },
 };
 
 interface BottomNavigationProps {
@@ -22,49 +13,65 @@ interface BottomNavigationProps {
   onNavigate: (route: string) => void;
 }
 
+const NAV_ITEMS = [
+  { id: 'dashboard',    icon: Home,     labelKey: 'home' as const },
+  { id: 'medications',  icon: Pill,     labelKey: 'medications' as const },
+  { id: 'appointments', icon: Calendar, labelKey: 'appointments' as const },
+  { id: 'profile',      icon: User,     labelKey: 'profile' as const },
+];
+
 export function BottomNavigation({ activeRoute, onNavigate }: BottomNavigationProps) {
   const { language } = useApp();
-  const t = translations[language];
-
-  const navItems = [
-    { id: 'dashboard', icon: Home, label: t.home },
-    { id: 'symptom-checker', icon: Activity, label: t.symptoms },
-    { id: 'appointments', icon: Calendar, label: t.appointments },
-    { id: 'profile', icon: User, label: t.profile },
-  ];
+  const t = translations[language as keyof typeof translations] ?? translations.sw;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 shadow-2xl z-50">
-      <div className="max-w-7xl mx-auto px-2">
-        <div className="grid grid-cols-4 gap-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeRoute === item.id;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`flex flex-col items-center justify-center py-3 px-2 transition-all duration-200 relative ${
-                  isActive
-                    ? 'text-green-700 bg-green-50'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50 active:scale-95'
-                }`}
-                style={{ minHeight: '64px' }}
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]"
+      aria-label="Urambazaji wa chini"
+    >
+      <div className="grid grid-cols-4 h-16">
+        {NAV_ITEMS.map((item) => {
+          const isActive = activeRoute === item.id || activeRoute.startsWith(item.id);
+          const Icon = item.icon;
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onNavigate(item.id)}
+              aria-label={t[item.labelKey]}
+              aria-current={isActive ? 'page' : undefined}
+              className="relative flex flex-col items-center justify-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-inset min-h-[48px]"
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="nav-pill"
+                  className="absolute inset-x-2 top-1 bottom-1 rounded-xl bg-[#EEF2FF]"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+
+              <motion.div
+                animate={{ scale: isActive ? 1.15 : 1 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="relative z-10"
               >
                 <Icon
-                  className={`h-7 w-7 mb-1 ${isActive ? 'stroke-[3]' : 'stroke-[2.5]'}`}
+                  size={22}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                  className={isActive ? 'text-[#6366f1]' : 'text-gray-400'}
+                  aria-hidden="true"
                 />
-                <span className={`text-xs leading-tight ${isActive ? 'font-bold' : 'font-semibold'}`}>
-                  {item.label}
+              </motion.div>
+
+              {isActive && (
+                <span className="relative z-10 text-[10px] font-semibold text-[#6366f1]">
+                  {t[item.labelKey]}
                 </span>
-                {isActive && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1.5 bg-green-700 rounded-t-full shadow-lg" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+              )}
+            </button>
+          );
+        })}
       </div>
     </nav>
   );
