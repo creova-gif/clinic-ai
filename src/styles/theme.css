@@ -2,78 +2,97 @@
 
 :root {
   --font-size: 16px;
-  
-  /* WORLD-CLASS COLOR SYSTEM (2026 Redesign) */
-  /* Trust-first, accessible, medical-grade, timeless */
-  /* No gradients. No neon. Flat, professional. */
-  
-  /* Primary: Deep Healthcare Blue */
-  --healthcare-blue: #0F3D56;
-  --primary: #0F3D56;
-  --primary-foreground: #ffffff;
-  
-  /* Secondary: Teal Green */
-  --teal-green: #1B998B;
-  --secondary: #1B998B;
-  --secondary-foreground: #ffffff;
-  
-  /* Background: Soft Off-White */
-  --background: #F7F9FB;
-  --foreground: #1E1E1E; /* Charcoal text */
-  
-  /* Card & Surface */
+
+  /* ── True Fusion Design System — AfyaCare Tanzania ── */
+  /* 50% Clinical Serenity + 50% Vibrant Africa            */
+
+  /* Brand palette */
+  --navy:   #1e1b4b;
+  --indigo: #6366f1;
+  --indigo-light: #818cf8;
+  --orange: #f97316;
+  --green:  #10b981;
+  --amber:  #f59e0b;
+  --red:    #ef4444;
+
+  /* Surfaces */
+  --background: #FFF9F5;
+  --foreground: #374151;
   --card: #ffffff;
-  --card-foreground: #1E1E1E;
+  --card-foreground: #374151;
   --popover: #ffffff;
-  --popover-foreground: #1E1E1E;
-  
-  /* Semantic Colors */
-  --danger-urgent: #C84B31; /* Muted Red */
-  --destructive: #C84B31;
-  --destructive-foreground: #ffffff;
-  
-  --success-clinical: #2E7D32; /* Clinical Green */
-  --success: #2E7D32;
+  --popover-foreground: #374151;
+
+  /* Primary = Indigo */
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+
+  /* Secondary = Navy */
+  --secondary: #1e1b4b;
+  --secondary-foreground: #ffffff;
+
+  /* Semantic */
+  --success: #10b981;
   --success-foreground: #ffffff;
-  
-  /* Neutral System */
-  --text-primary: #1E1E1E; /* Charcoal */
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
-  
-  --muted: #E5E7EB;
-  --muted-foreground: #6B7280;
-  --accent: #F3F4F6;
-  --accent-foreground: #1E1E1E;
-  
-  /* Borders & Inputs */
-  --border: #D1D5DB;
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Text */
+  --text-primary: #1e1b4b;
+  --text-body: #374151;
+  --text-muted: #6b7280;
+
+  /* Neutral */
+  --muted: #f1f5f9;
+  --muted-foreground: #6b7280;
+  --accent: #EEF2FF;
+  --accent-foreground: #4338ca;
+
+  /* Borders & inputs */
+  --border: #e2e8f0;
   --input: transparent;
   --input-background: #ffffff;
-  --switch-background: #D1D5DB;
-  --ring: #0F3D56;
-  
-  /* Typography */
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --font-variant-numeric: tabular-nums; /* For vitals & dates */
-  
-  /* Chart colors using professional palette */
-  --chart-1: #0F3D56; /* Healthcare Blue */
-  --chart-2: #1B998B; /* Teal Green */
-  --chart-3: #2E7D32; /* Clinical Green */
-  --chart-4: #C84B31; /* Danger Urgent */
-  --chart-5: #6B7280; /* Text Secondary */
-  
-  --radius: 0.5rem; /* Slightly reduced for professional look */
+  --switch-background: #e2e8f0;
+  --ring: #6366f1;
+
+  /* Hero gradient (navy → indigo → orange) */
+  --hero-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #f97316 100%);
+
+  /* Kanga stripe colors */
+  --kanga-1: #1e1b4b;
+  --kanga-2: #f59e0b;
+  --kanga-3: #10b981;
+
+  /* Card shadow */
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+  /* Radius */
+  --radius: 1rem;
+
+  /* Typography scale */
+  --font-weight-display: 900;
+  --font-weight-heading: 700;
+  --font-weight-body: 400;
+  --font-weight-medical: 800;
+
+  /* Chart — True Fusion palette */
+  --chart-1: #6366f1;
+  --chart-2: #f97316;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #1e1b4b;
+
+  /* Sidebar */
   --sidebar: #ffffff;
-  --sidebar-foreground: #1E1E1E;
-  --sidebar-primary: #0F3D56;
+  --sidebar-foreground: #374151;
+  --sidebar-primary: #6366f1;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #F7F9FB;
-  --sidebar-accent-foreground: #1E1E1E;
-  --sidebar-border: #D1D5DB;
-  --sidebar-ring: #0F3D56;
+  --sidebar-accent: #EEF2FF;
+  --sidebar-accent-foreground: #4338ca;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #6366f1;
 }
 
 .dark {
