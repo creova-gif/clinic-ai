@@ -92,7 +92,7 @@
     "monitor:health-check": "node src/app/tests/MonitoringAlertingSystem.ts health",
     "notify:moh-team": "node scripts/notifyMoHTeam.js",
     "server:test": "vite --mode test",
-    "smoke:production": "echo 'Run production smoke tests'",
+    "smoke:production": "echo 'Run production smoke tests'"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

@@ -18,23 +18,21 @@ import {
 } from './utils/monitoring';
 
 // Components
-import { SplashScreen } from './components/SplashScreen';
+import { ModernSplash as SplashScreen } from './components/ModernSplash';
 import { BottomNavigation } from './components/BottomNavigation';
 import { Globe } from 'lucide-react';
 import { Button } from './components/ui/button';
 import type { OnboardingData } from './components/OnboardingOrchestrator';
-import { NationalInfrastructureApp } from './components/NationalInfrastructureApp';
 
 // ✅ PERFORMANCE: Lazy load legacy components (for compatibility)
-const WorldClassApp = lazy(() => import('./components/WorldClassApp').then(m => ({ default: m.WorldClassApp })));
 const OnboardingOrchestrator = lazy(() => import('./components/OnboardingOrchestrator').then(m => ({ default: m.OnboardingOrchestrator })));
 const OnboardingEnhancementManager = lazy(() => import('./components/OnboardingEnhancementManager').then(m => ({ default: m.OnboardingEnhancementManager })));
 const MicroFeedback = lazy(() => import('./components/MicroFeedback').then(m => ({ default: m.MicroFeedback })));
 const PatientPortalManager = lazy(() => import('./components/PatientPortalManager').then(m => ({ default: m.PatientPortalManager })));
-const PatientDashboard = lazy(() => import('./components/PatientDashboard').then(m => ({ default: m.PatientDashboard })));
+const PatientDashboard = lazy(() => import('./components/ModernHomeRedesigned').then(m => ({ default: m.ModernHome })));
 const EnhancedSymptomChecker = lazy(() => import('./components/EnhancedSymptomChecker').then(m => ({ default: m.EnhancedSymptomChecker })));
 const AppointmentsScreen = lazy(() => import('./components/AppointmentsScreen').then(m => ({ default: m.AppointmentsScreen })));
-const ProfileScreen = lazy(() => import('./components/ProfileScreen').then(m => ({ default: m.ProfileScreen })));
+const ProfileScreen = lazy(() => import('./components/ProfileRedesigned').then(m => ({ default: m.Profile })));
 const MaternalCareTracker = lazy(() => import('./components/MaternalCareTracker').then(m => ({ default: m.MaternalCareTracker })));
 const CHWDashboard = lazy(() => import('./components/CHWDashboard').then(m => ({ default: m.CHWDashboard })));
 const MoHDashboard = lazy(() => import('./components/MoHDashboard').then(m => ({ default: m.MoHDashboard })));
@@ -454,26 +452,13 @@ function AppContent() {
 }
 
 export default function App() {
-  // ✅ ALWAYS USE NATIONAL INFRASTRUCTURE MODE (World-Class Standard)
-  const [useNationalInfrastructure, setUseNationalInfrastructure] = useState(true);
-
-  useEffect(() => {
-    // Initialize monitoring on app start
-    initializeMonitoring();
-    
-    // Check if user explicitly requested legacy mode (for testing only)
-    const legacyMode = localStorage.getItem('legacy_mode') === 'true';
-    setUseNationalInfrastructure(!legacyMode);
-  }, []);
-
-  // Wrap everything with i18n provider at the top level
   return (
     <I18nextProvider i18n={i18n}>
       <AppProvider>
         <SharedDeviceProvider>
           <ErrorBoundary>
             <Suspense fallback={<LoadingSpinner />}>
-              {useNationalInfrastructure ? <NationalInfrastructureApp /> : <WorldClassApp />}
+              <AppContent />
             </Suspense>
           </ErrorBoundary>
         </SharedDeviceProvider>
