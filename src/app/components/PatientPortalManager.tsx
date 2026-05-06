@@ -126,11 +126,9 @@ export function PatientPortalManager({
       case 'telemedicine':
       case 'health-education':
         // These would navigate to actual screens in production
-        console.log(`Navigate to ${route}`);
         trackAnalytics('feature_access_attempt', { route });
         break;
       default:
-        console.log(`Unknown route: ${route}`);
     }
   };
   

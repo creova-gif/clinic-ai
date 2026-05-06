@@ -248,11 +248,6 @@ export function Messages({
     if (!replyText.trim() || !selectedMessage) return;
 
     // Queue message for sending
-    console.log('Queueing message:', {
-      to: selectedMessage.sender.name,
-      body: replyText,
-      offline: !isOnline,
-    });
 
     setReplyText('');
     alert(

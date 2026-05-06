@@ -93,7 +93,6 @@ export function AccountCreationScreen({ onComplete, language }: AccountCreationS
 
   const handleSocialLogin = (provider: 'google' | 'apple') => {
     // Simulate social login
-    console.log(`Social login with ${provider}`);
     onComplete({
       phone: '',
       biometricEnabled: false,

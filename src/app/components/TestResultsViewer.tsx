@@ -19,7 +19,11 @@ import {
 import { MedicalButton, MedicalCard, colors, StatusBadge } from '@/app/design-system';
 import { api } from '@/app/services/api';
 import type { TestResult as ApiTestResult } from '@/app/services/supabase';
+import { getAuthUserId } from '@/app/utils/auth';
 import { toast } from 'sonner';
+
+const MOCK_USER_ID = 'mock_user_001';
+
 
 interface TestResultsViewerProps {
   language: 'sw' | 'en';
@@ -47,12 +51,11 @@ export function TestResultsViewer({ language, onBack }: TestResultsViewerProps) 
 
   const loadTestResults = async () => {
     setIsLoading(true);
-    const userId = 'user_001'; // TODO: Get from auth context
+    const userId = await getAuthUserId() ?? MOCK_USER_ID;
     const response = await api.testResults.list(userId);
     if (response.success && response.data) {
       setTestResults(response.data);
     } else {
-      console.error('Failed to load test results:', response.error);
       toast.error(language === 'sw' ? 'Imeshindwa kupakia matokeo' : 'Failed to load test results');
     }
     setIsLoading(false);

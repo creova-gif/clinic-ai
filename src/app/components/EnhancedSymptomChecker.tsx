@@ -167,7 +167,6 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
       try {
         sessionStorage.setItem('symptom_checker_autosave', JSON.stringify(answers));
       } catch (e) {
-        console.error('Failed to autosave:', e);
       }
     }
   }, [answers]);
@@ -182,7 +181,6 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
         setCurrentQuestion(savedAnswers.length);
       }
     } catch (e) {
-      console.error('Failed to restore autosave:', e);
     }
   }, []);
 
@@ -199,13 +197,10 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
       });
 
       if (response.success) {
-        console.log('✅ Assessment saved:', assessment.auditId);
       } else {
-        console.error('Failed to save assessment:', response.error);
         // Don't show error to user - this is background logging
       }
     } catch (error) {
-      console.error('Assessment save error:', error);
     } finally {
       setIsSaving(false);
     }

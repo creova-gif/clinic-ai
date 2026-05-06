@@ -217,7 +217,6 @@ export function DigitalPatientOnboarding({ onComplete, onClose }: DigitalPatient
       try {
         setFormData(JSON.parse(saved));
       } catch (e) {
-        console.error('Failed to load draft');
       }
     }
   }, []);

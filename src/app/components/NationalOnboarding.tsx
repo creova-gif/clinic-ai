@@ -1,23 +1,11 @@
 /**
- * NationalOnboarding - World-Class Entry Experience
- * 
- * DESIGN PRINCIPLES:
- * - Build trust without hype
- * - No AI claims or certification badges
- * - Clean white space
- * - Clear purpose
- * - Max 4 screens
- * - Skip allowed
- * - Plain Swahili default
- * - No animations >200ms
- * 
- * COMPARED TO: NHS App onboarding, Apple Health setup
+ * NationalOnboarding — Premium Redesign 2026
+ * Premium dark+vibrant design with animated step transitions,
+ * glassmorphism cards, and smooth language toggle.
  */
 
 import React, { useState } from 'react';
-import { ChevronRight, Shield, MapPin, Phone, CheckCircle } from 'lucide-react';
-import { colors } from '@/app/design-system';
-import { LanguageToggle } from './LanguageToggle';
+import { ChevronRight, Shield, MapPin, Heart, ArrowRight } from 'lucide-react';
 
 interface NationalOnboardingProps {
   onComplete: (data: {
@@ -28,336 +16,263 @@ interface NationalOnboardingProps {
   }) => void;
 }
 
+const content = {
+  sw: {
+    skip: 'Ruka',
+    next: 'Endelea',
+    done: 'Anza AfyaCare',
+    steps: [
+      {
+        icon: Heart,
+        tag: 'Karibu',
+        title: 'Afya yako.\nImeshikamana.',
+        body: 'Huduma za afya bora zaidi kutoka serikali ya Tanzania — mahali popote, wakati wowote.',
+        cta: 'Anza Safari Yako',
+      },
+      {
+        icon: MapPin,
+        tag: 'Upatikanaji',
+        title: 'Pata huduma\nMahali popote nchini.',
+        body: 'Vituo vya afya 6,000+ vinapatikana kwenye AfyaCare — Dar es Salaam hadi Mtwara.',
+        cta: 'Endelea',
+      },
+      {
+        icon: Shield,
+        tag: 'Faragha',
+        title: 'Data yako.\nUnayo udhibiti.',
+        body: 'Taarifa zako zinabaki salama kwa usimbuaji wa hali ya juu. Hii ni haki yako.',
+        cta: 'Endelea',
+      },
+    ],
+    account: {
+      tag: 'Akaunti',
+      title: 'Unda akaunti yako',
+      body: 'Hatua moja tu kukubaliana kuanza.',
+      name: 'Jina kamili',
+      namePlaceholder: 'Mfano: Amina Njoki',
+      phone: 'Namba ya simu',
+      phonePlaceholder: '+255 7XX XXX XXX',
+      consent: 'Ninakubali sera ya faragha na masharti',
+      consentNote: 'Lazima ukubali ili kuendelea',
+    },
+  },
+  en: {
+    skip: 'Skip',
+    next: 'Continue',
+    done: 'Start AfyaCare',
+    steps: [
+      {
+        icon: Heart,
+        tag: 'Welcome',
+        title: 'Your health.\nConnected.',
+        body: 'World-class healthcare from the Government of Tanzania — anywhere, anytime.',
+        cta: 'Start Your Journey',
+      },
+      {
+        icon: MapPin,
+        tag: 'Access',
+        title: 'Care available\nanywhere in Tanzania.',
+        body: '6,000+ health facilities available on AfyaCare — from Dar es Salaam to Mtwara.',
+        cta: 'Continue',
+      },
+      {
+        icon: Shield,
+        tag: 'Privacy',
+        title: 'Your data.\nYour control.',
+        body: 'Your information stays protected with enterprise-grade encryption. It\'s your right.',
+        cta: 'Continue',
+      },
+    ],
+    account: {
+      tag: 'Account',
+      title: 'Create your account',
+      body: 'One quick step to get started.',
+      name: 'Full name',
+      namePlaceholder: 'e.g. Amina Njoki',
+      phone: 'Phone number',
+      phonePlaceholder: '+255 7XX XXX XXX',
+      consent: 'I agree to the privacy policy and terms',
+      consentNote: 'You must agree to continue',
+    },
+  },
+};
+
 export function NationalOnboarding({ onComplete }: NationalOnboardingProps) {
   const [step, setStep] = useState(0);
   const [language, setLanguage] = useState<'sw' | 'en'>('sw');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
-
-  const content = {
-    sw: {
-      skip: 'Ruka',
-      next: 'Endelea',
-      done: 'Maliza',
-      welcome: {
-        title: 'Afya yako. Imeshikamana.',
-        subtitle: 'Huduma za afya kutoka serikali ya Tanzania',
-        cta: 'Anza',
-      },
-      access: {
-        title: 'Pata huduma. Mahali popote nchini.',
-        subtitle: 'Vituo vya afya, hospitali, na wataalamu wanapatikana',
-        feature1: 'Pata ushauri wa haraka',
-        feature2: 'Tafuta kliniki karibu nawe',
-        feature3: 'Fuatilia afya yako',
-      },
-      privacy: {
-        title: 'Taarifa zako zinabaki salama.',
-        subtitle: 'Data yako ni yako. Unayo udhibiti kamili.',
-        feature1: 'Data encrypted',
-        feature2: 'Unaona nani anafikia',
-        feature3: 'Ufutaji wa data wakati wowote',
-      },
-      account: {
-        title: 'Unda akaunti yako',
-        subtitle: 'Ingiza taarifa zako za msingi',
-        nameLabel: 'Jina lako kamili',
-        namePlaceholder: 'Jina la kwanza na la mwisho',
-        phoneLabel: 'Namba ya simu',
-        phonePlaceholder: '+255 7XX XXX XXX',
-        consentLabel: 'Ninakubali sera ya faragha na masharti ya matumizi',
-        consentRequired: 'Lazima ukubali ili kuendelea',
-      },
-    },
-    en: {
-      skip: 'Skip',
-      next: 'Continue',
-      done: 'Get Started',
-      welcome: {
-        title: 'Your health. Connected.',
-        subtitle: 'Healthcare services from the Government of Tanzania',
-        cta: 'Begin',
-      },
-      access: {
-        title: 'Access care. Anywhere in Tanzania.',
-        subtitle: 'Health facilities, hospitals, and experts available',
-        feature1: 'Get quick guidance',
-        feature2: 'Find nearby clinics',
-        feature3: 'Track your health',
-      },
-      privacy: {
-        title: 'Your information stays secure.',
-        subtitle: 'Your data is yours. You have full control.',
-        feature1: 'Data encrypted',
-        feature2: 'See who accesses',
-        feature3: 'Delete data anytime',
-      },
-      account: {
-        title: 'Create your account',
-        subtitle: 'Enter your basic information',
-        nameLabel: 'Your full name',
-        namePlaceholder: 'First and last name',
-        phoneLabel: 'Phone number',
-        phonePlaceholder: '+255 7XX XXX XXX',
-        consentLabel: 'I agree to the privacy policy and terms of use',
-        consentRequired: 'You must agree to continue',
-      },
-    },
-  };
+  const [showConsentError, setShowConsentError] = useState(false);
 
   const t = content[language];
+  const totalSteps = 4; // 3 info + 1 account
 
   const handleNext = () => {
-    if (step === 3) {
-      // Final step - validate and complete
-      if (name && phone && consentGiven) {
-        onComplete({
-          language,
-          name,
-          phone,
-          consentGiven,
-        });
-      }
-    } else {
+    if (step < 3) {
       setStep(step + 1);
+    } else {
+      if (!consentGiven) {
+        setShowConsentError(true);
+        return;
+      }
+      onComplete({ language, name, phone, consentGiven });
     }
   };
 
-  const handleSkip = () => {
-    if (step < 2) {
-      setStep(2); // Skip to account creation
-    }
-  };
+  // Accent colors cycle per step
+  const stepAccents = [
+    { from: '#0F3D56', to: '#1B998B', icon: '#1B998B' },
+    { from: '#1B3A5C', to: '#2E7D32', icon: '#4CAF50' },
+    { from: '#1A237E', to: '#0F3D56', icon: '#42A5F5' },
+    { from: '#0F3D56', to: '#1B998B', icon: '#1B998B' },
+  ];
+  const accent = stepAccents[step];
+
+  const isInfoStep = step < 3;
+  const stepData = isInfoStep ? t.steps[step] : null;
+  const StepIcon = stepData?.icon ?? Shield;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Language Toggle - Always visible */}
-      <LanguageToggle
-        language={language}
-        onToggle={() => setLanguage(language === 'sw' ? 'en' : 'sw')}
+    <div className="afya-onboard">
+      {/* Animated gradient background */}
+      <div
+        className="afya-onboard__bg"
+        style={{ background: `linear-gradient(145deg, ${accent.from} 0%, ${accent.to} 100%)` }}
       />
 
-      {/* Progress Indicators */}
-      <div className="px-6 pt-6">
-        <div className="flex gap-2 max-w-md mx-auto">
-          {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-1 flex-1 rounded-full transition-all duration-200"
-              style={{
-                backgroundColor: i <= step ? colors.primary[500] : '#E5E7EB',
-              }}
-            />
-          ))}
-        </div>
+      {/* Language toggle */}
+      <div className="afya-onboard__lang">
+        <button
+          onClick={() => setLanguage(language === 'sw' ? 'en' : 'sw')}
+          className="afya-onboard__lang-btn"
+        >
+          <span className={language === 'sw' ? 'font-bold' : 'opacity-60'}>SW</span>
+          <span className="mx-1 opacity-40">·</span>
+          <span className={language === 'en' ? 'font-bold' : 'opacity-60'}>EN</span>
+        </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="max-w-md w-full">
-          {/* STEP 0: Welcome */}
-          {step === 0 && (
-            <div className="text-center">
-              {/* Ministry Logo Placeholder */}
-              <div
-                className="w-20 h-20 mx-auto mb-8 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: colors.primary[50] }}
-              >
-                <Shield className="w-10 h-10" style={{ color: colors.primary[500] }} strokeWidth={2} />
-              </div>
+      {/* Progress dots */}
+      <div className="afya-onboard__dots">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className={`afya-onboard__dot${i === step ? ' afya-onboard__dot--active' : i < step ? ' afya-onboard__dot--done' : ''}`}
+          />
+        ))}
+      </div>
 
-              <h1 className="text-3xl font-semibold text-[#1A1D23] mb-4">
-                {t.welcome.title}
-              </h1>
-              <p className="text-lg text-[#6B7280] mb-12">
-                {t.welcome.subtitle}
-              </p>
-
-              <button
-                onClick={handleNext}
-                className="w-full px-6 py-4 text-white rounded-xl text-lg font-semibold active:scale-[0.99] transition-transform"
-                style={{
-                  backgroundColor: colors.primary[500],
-                  minHeight: '56px',
-                }}
-              >
-                {t.welcome.cta}
-              </button>
+      {/* Card */}
+      <div className="afya-onboard__card">
+        {isInfoStep && stepData ? (
+          <div className="afya-onboard__info">
+            {/* Tag */}
+            <div className="afya-onboard__tag" style={{ color: accent.icon }}>
+              <StepIcon className="w-3.5 h-3.5" />
+              <span>{stepData.tag}</span>
             </div>
-          )}
 
-          {/* STEP 1: Access */}
-          {step === 1 && (
-            <div>
-              <div
-                className="w-16 h-16 mb-6 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: colors.primary[50] }}
-              >
-                <MapPin className="w-8 h-8" style={{ color: colors.primary[500] }} strokeWidth={2} />
-              </div>
-
-              <h2 className="text-2xl font-semibold text-[#1A1D23] mb-3">
-                {t.access.title}
-              </h2>
-              <p className="text-base text-[#6B7280] mb-8">
-                {t.access.subtitle}
-              </p>
-
-              <div className="space-y-4 mb-12">
-                <FeatureItem text={t.access.feature1} />
-                <FeatureItem text={t.access.feature2} />
-                <FeatureItem text={t.access.feature3} />
-              </div>
-
-              <button
-                onClick={handleNext}
-                className="w-full px-6 py-4 text-white rounded-xl text-base font-semibold active:scale-[0.99] transition-transform"
-                style={{
-                  backgroundColor: colors.primary[500],
-                  minHeight: '56px',
-                }}
-              >
-                {t.next}
-              </button>
+            {/* Icon */}
+            <div className="afya-onboard__icon-wrap" style={{ background: `${accent.icon}15`, border: `2px solid ${accent.icon}30` }}>
+              <StepIcon className="w-9 h-9" style={{ color: accent.icon }} strokeWidth={1.5} />
             </div>
-          )}
 
-          {/* STEP 2: Privacy */}
-          {step === 2 && (
-            <div>
-              <div
-                className="w-16 h-16 mb-6 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: colors.primary[50] }}
-              >
-                <Shield className="w-8 h-8" style={{ color: colors.primary[500] }} strokeWidth={2} />
-              </div>
+            {/* Title */}
+            <h1 className="afya-onboard__title">{stepData.title}</h1>
 
-              <h2 className="text-2xl font-semibold text-[#1A1D23] mb-3">
-                {t.privacy.title}
-              </h2>
-              <p className="text-base text-[#6B7280] mb-8">
-                {t.privacy.subtitle}
-              </p>
+            {/* Body */}
+            <p className="afya-onboard__body">{stepData.body}</p>
 
-              <div className="space-y-4 mb-12">
-                <FeatureItem text={t.privacy.feature1} />
-                <FeatureItem text={t.privacy.feature2} />
-                <FeatureItem text={t.privacy.feature3} />
-              </div>
+            {/* CTA */}
+            <button className="afya-onboard__cta" onClick={handleNext}>
+              <span>{stepData.cta}</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
 
-              <button
-                onClick={handleNext}
-                className="w-full px-6 py-4 text-white rounded-xl text-base font-semibold active:scale-[0.99] transition-transform"
-                style={{
-                  backgroundColor: colors.primary[500],
-                  minHeight: '56px',
-                }}
-              >
-                {t.next}
+            {/* Skip link */}
+            {step < 2 && (
+              <button className="afya-onboard__skip" onClick={() => setStep(3)}>
+                {t.skip}
               </button>
+            )}
+          </div>
+        ) : (
+          <div className="afya-onboard__form">
+            {/* Tag */}
+            <div className="afya-onboard__tag" style={{ color: accent.icon }}>
+              <Shield className="w-3.5 h-3.5" />
+              <span>{t.account.tag}</span>
             </div>
-          )}
 
-          {/* STEP 3: Account Creation */}
-          {step === 3 && (
-            <div>
-              <h2 className="text-2xl font-semibold text-[#1A1D23] mb-3">
-                {t.account.title}
-              </h2>
-              <p className="text-base text-[#6B7280] mb-8">
-                {t.account.subtitle}
-              </p>
+            <h1 className="afya-onboard__title">{t.account.title}</h1>
+            <p className="afya-onboard__body">{t.account.body}</p>
 
-              <div className="space-y-6 mb-8">
-                {/* Name Input */}
-                <div>
-                  <label className="block text-sm font-medium text-[#1A1D23] mb-2">
-                    {t.account.nameLabel}
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder={t.account.namePlaceholder}
-                    className="w-full px-4 py-3 border-2 border-[#E5E7EB] rounded-lg text-base focus:outline-none focus:border-[#1E88E5]"
-                    style={{ minHeight: '52px' }}
-                  />
+            <div className="afya-onboard__fields">
+              {/* Name */}
+              <div className="afya-onboard__field">
+                <label className="afya-onboard__label">{t.account.name}</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t.account.namePlaceholder}
+                  className="afya-onboard__input"
+                  autoComplete="name"
+                />
+              </div>
+
+              {/* Phone */}
+              <div className="afya-onboard__field">
+                <label className="afya-onboard__label">{t.account.phone}</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t.account.phonePlaceholder}
+                  className="afya-onboard__input"
+                  autoComplete="tel"
+                />
+              </div>
+
+              {/* Consent */}
+              <label className="afya-onboard__consent">
+                <div
+                  className={`afya-onboard__checkbox${consentGiven ? ' afya-onboard__checkbox--checked' : ''}`}
+                  onClick={() => {
+                    setConsentGiven(!consentGiven);
+                    setShowConsentError(false);
+                  }}
+                  role="checkbox"
+                  aria-checked={consentGiven}
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === ' ' && setConsentGiven(!consentGiven)}
+                >
+                  {consentGiven && (
+                    <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                      <path d="M1 5L4.5 8.5L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </div>
+                <span className="afya-onboard__consent-text">{t.account.consent}</span>
+              </label>
 
-                {/* Phone Input */}
-                <div>
-                  <label className="block text-sm font-medium text-[#1A1D23] mb-2">
-                    {t.account.phoneLabel}
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder={t.account.phonePlaceholder}
-                    className="w-full px-4 py-3 border-2 border-[#E5E7EB] rounded-lg text-base focus:outline-none focus:border-[#1E88E5]"
-                    style={{ minHeight: '52px' }}
-                  />
-                </div>
-
-                {/* Consent Checkbox */}
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={consentGiven}
-                    onChange={(e) => setConsentGiven(e.target.checked)}
-                    className="mt-1 w-5 h-5 rounded border-2 border-[#E5E7EB]"
-                    style={{ accentColor: colors.primary[500] }}
-                  />
-                  <span className="text-sm text-[#6B7280] leading-relaxed">
-                    {t.account.consentLabel}
-                  </span>
-                </label>
-              </div>
-
-              <button
-                onClick={handleNext}
-                disabled={!name || !phone || !consentGiven}
-                className="w-full px-6 py-4 text-white rounded-xl text-base font-semibold active:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  backgroundColor: colors.primary[500],
-                  minHeight: '56px',
-                }}
-              >
-                {t.done}
-              </button>
-
-              {!consentGiven && name && phone && (
-                <p className="text-sm text-center mt-4" style={{ color: colors.danger[500] }}>
-                  {t.account.consentRequired}
-                </p>
+              {showConsentError && (
+                <p className="afya-onboard__error">{t.account.consentNote}</p>
               )}
             </div>
-          )}
-        </div>
+
+            <button
+              className={`afya-onboard__cta${!name || !phone ? ' afya-onboard__cta--disabled' : ''}`}
+              onClick={handleNext}
+              disabled={!name || !phone}
+            >
+              <span>{t.done}</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </div>
-
-      {/* Skip button (only for steps 0-1) */}
-      {step < 2 && (
-        <div className="px-6 pb-6">
-          <button
-            onClick={handleSkip}
-            className="w-full py-3 text-[#6B7280] text-sm font-medium"
-          >
-            {t.skip}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Feature Item Component
-function FeatureItem({ text }: { text: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <CheckCircle className="w-6 h-6 flex-shrink-0" style={{ color: colors.primary[500] }} strokeWidth={2} />
-      <span className="text-base text-[#1A1D23]">{text}</span>
     </div>
   );
 }

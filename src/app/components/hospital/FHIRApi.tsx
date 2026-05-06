@@ -540,5 +540,4 @@ export async function exampleFHIRUsage() {
   // Get medications
   const meds = await client.getMedicationRequests('pat-001');
   
-  console.log('FHIR Data Retrieved:', { searchResults, vitals, labs, meds });
 }

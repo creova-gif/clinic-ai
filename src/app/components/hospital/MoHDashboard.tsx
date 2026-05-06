@@ -151,7 +151,6 @@ export const MoHAnalyticsDashboard: React.FC<MoHDashboardProps> = ({ userRole })
     setLoading(true);
     // Simulate export
     await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log(`Exporting ${format} report...`);
     setLoading(false);
   };
 

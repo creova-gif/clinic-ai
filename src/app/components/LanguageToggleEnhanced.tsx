@@ -39,7 +39,6 @@ export function LanguageToggle() {
         setSwitching(false);
       }, 300);
     } catch (error) {
-      console.error('Failed to change language:', error);
       setSwitching(false);
     }
   };

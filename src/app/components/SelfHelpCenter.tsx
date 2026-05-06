@@ -207,7 +207,6 @@ export function SelfHelpCenter({ isOpen, onClose }: SelfHelpCenterProps) {
   const handleFeedback = (articleId: string, helpful: boolean) => {
     setFeedbackGiven({ ...feedbackGiven, [articleId]: true });
     // In production, send feedback to backend
-    console.log(`Article ${articleId} marked as ${helpful ? 'helpful' : 'not helpful'}`);
   };
   
   if (!isOpen) return null;

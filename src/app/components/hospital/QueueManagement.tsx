@@ -308,25 +308,21 @@ export const QueueManagement: React.FC<QueueManagementProps> = ({
    */
   const callNextPatient = async (queueEntry: QueueEntry) => {
     // API call to update status
-    console.log('Calling patient:', queueEntry.queue_id);
     loadQueue();
   };
 
   const assignProvider = async (queueId: string, providerId: string) => {
     // API call to assign
-    console.log('Assigning provider:', providerId, 'to queue:', queueId);
     loadQueue();
   };
 
   const pauseQueue = async (queueId: string) => {
     // API call to pause
-    console.log('Pausing queue:', queueId);
     loadQueue();
   };
 
   const markNoShow = async (queueId: string) => {
     // API call to mark no-show
-    console.log('Marking no-show:', queueId);
     loadQueue();
   };
 

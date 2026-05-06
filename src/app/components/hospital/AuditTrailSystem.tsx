@@ -169,7 +169,6 @@ export const AuditTrailSystem: React.FC<AuditTrailSystemProps> = ({
    * EXPORT AUDIT LOGS
    */
   const exportLogs = async (format: 'csv' | 'pdf' | 'json') => {
-    console.log(`Exporting ${filteredLogs.length} logs as ${format}`);
     // Implementation: Generate file and download
   };
 
@@ -184,7 +183,6 @@ export const AuditTrailSystem: React.FC<AuditTrailSystemProps> = ({
       // Verify hash chain
       if (log.previous_hash !== previousHash) {
         isValid = false;
-        console.error('Hash chain broken at:', log.audit_id);
         break;
       }
 
@@ -192,7 +190,6 @@ export const AuditTrailSystem: React.FC<AuditTrailSystemProps> = ({
       const calculatedHash = generateHash(log.audit_id);
       if (log.hash !== calculatedHash) {
         isValid = false;
-        console.error('Hash mismatch at:', log.audit_id);
         break;
       }
 
@@ -597,5 +594,4 @@ async function getLastAuditHash(): Promise<string | null> {
 
 async function saveAuditLog(log: AuditLog): Promise<void> {
   // Save to append-only database
-  console.log('Audit log saved:', log.audit_id);
 }

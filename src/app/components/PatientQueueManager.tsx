@@ -214,7 +214,6 @@ function PatientDetail({ patient }: PatientDetailProps) {
       setLabs(labOrders);
       setMedications(meds);
     } catch (error) {
-      console.error('Error loading patient data:', error);
     }
   }
 
@@ -489,7 +488,6 @@ export default function PatientQueueManager() {
       const data = await patientQueueApi.getQueue();
       setPatients(data);
     } catch (error) {
-      console.error('Error loading queue:', error);
       toast.error('Failed to load patient queue');
     } finally {
       setLoading(false);
@@ -501,7 +499,6 @@ export default function PatientQueueManager() {
       const data = await patientQueueApi.getQueueStats();
       setStats(data);
     } catch (error) {
-      console.error('Error loading stats:', error);
     }
   }
 

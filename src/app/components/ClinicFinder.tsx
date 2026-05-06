@@ -140,7 +140,6 @@ export function ClinicFinder({ language, onBack }: ClinicFinderProps) {
           setLoading(false);
         },
         (error) => {
-          console.error('Location error:', error);
           setLoading(false);
         }
       );

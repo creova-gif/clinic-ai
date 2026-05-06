@@ -114,7 +114,6 @@ export function FacilityFinder({ onBack }: { onBack: () => void }) {
     if (response.success && response.data) {
       setFacilities(response.data);
     } else {
-      console.error('Failed to load facilities:', response.error);
       toast.error(language === 'sw' ? 'Imeshindwa kupakia vituo' : 'Failed to load facilities');
     }
     setIsLoading(false);
@@ -132,7 +131,6 @@ export function FacilityFinder({ onBack }: { onBack: () => void }) {
           loadNearbyFacilities(position.coords.latitude, position.coords.longitude);
         },
         (error) => {
-          console.warn('Geolocation error:', error);
           // Fallback to Dar es Salaam center
           setUserLocation({ lat: -6.7924, lng: 39.2083 });
         }

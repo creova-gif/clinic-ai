@@ -213,7 +213,6 @@ export default function ClinicDashboard() {
       setStockAlerts(alerts);
       setPendingPrescriptions(prescriptions);
     } catch (error) {
-      console.error('Error loading dashboard:', error);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);

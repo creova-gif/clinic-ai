@@ -167,7 +167,6 @@ export function InAppGuidanceSystem({ enabled = true }: InAppGuidanceSystemProps
       try {
         setCompletedGuidance(JSON.parse(completed));
       } catch (e) {
-        console.error('Failed to load completed guidance');
       }
     }
   }, []);

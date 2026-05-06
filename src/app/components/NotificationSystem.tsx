@@ -128,7 +128,6 @@ export function NotificationSystem({ enabled = true }: NotificationSystemProps) 
           timestamp: new Date(n.timestamp),
         })));
       } catch (e) {
-        console.error('Failed to load notifications');
       }
     } else {
       // Initialize with mock notifications
@@ -159,7 +158,7 @@ export function NotificationSystem({ enabled = true }: NotificationSystemProps) 
         priority: 'high',
         timestamp: new Date(),
         actionLabel: t.reschedule,
-        action: () => console.log('Reschedule'),
+        action: () => {},
         dismissed: false,
         sentChannels: ['in-app', 'sms'],
       },
@@ -171,7 +170,7 @@ export function NotificationSystem({ enabled = true }: NotificationSystemProps) 
         priority: 'medium',
         timestamp: new Date(Date.now() - 3600000), // 1 hour ago
         actionLabel: t.complete,
-        action: () => console.log('Complete form'),
+        action: () => {},
         dismissed: false,
         sentChannels: ['in-app'],
       },
@@ -183,7 +182,7 @@ export function NotificationSystem({ enabled = true }: NotificationSystemProps) 
         priority: 'medium',
         timestamp: new Date(Date.now() - 7200000), // 2 hours ago
         actionLabel: t.remind,
-        action: () => console.log('Remind later'),
+        action: () => {},
         dismissed: false,
         sentChannels: ['in-app', 'sms'],
       },

@@ -16,6 +16,15 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
+// Send errors to the monitoring/Sentry service if configured
+function reportError(error: Error, errorInfo: ErrorInfo) {
+  import('@/app/utils/monitoring').then((m) => {
+    m.logError(error, { componentStack: errorInfo.componentStack ?? '' });
+  }).catch(() => {
+    // monitoring unavailable — silently ignore
+  });
+}
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -47,22 +56,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console
-    console.error('🚨 ErrorBoundary caught an error:', error, errorInfo);
-
-    // Update state with error details
-    this.setState({
-      error,
-      errorInfo,
-    });
+    this.setState({ error, errorInfo });
 
     // Call custom error handler if provided
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
-    }
+    if (this.props.onError) this.props.onError(error, errorInfo);
 
-    // TODO: Send to error tracking service (Sentry, etc.)
-    // logErrorToService(error, errorInfo);
+    // Send to error tracking (Sentry via monitoring module)
+    reportError(error, errorInfo);
   }
 
   handleReset = () => {
@@ -107,7 +107,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </p>
 
             {/* Error Details (Development Only) */}
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="mb-6 text-left">
                 <summary className="text-sm font-medium text-[#EF4444] cursor-pointer mb-2">
                   🔍 Technical Details (Dev Only)

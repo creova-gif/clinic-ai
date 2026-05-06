@@ -186,7 +186,6 @@ export function EmergencyAccess({
         // Would share location with emergency services
         const locationMessage = `Emergency location: ${position.coords.latitude}, ${position.coords.longitude}`;
         // Could send via SMS to emergency contact
-        console.log(locationMessage);
       });
     }
   };

@@ -62,7 +62,6 @@ export const BillingModule: React.FC<{ patient: Patient; encounter: Encounter }>
 
   const submitNHIFClaim = async () => {
     // NHIF API integration
-    console.log('Submitting NHIF claim:', invoice);
     alert('NHIF claim submitted successfully. Reference: ' + Math.random().toString(36).substr(2, 9).toUpperCase());
   };
 

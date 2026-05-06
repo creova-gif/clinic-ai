@@ -89,7 +89,6 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     };
 
     recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
       setError('Could not understand. Please try again.');
       if (onError) onError(event.error);
       setIsListening(false);
@@ -122,7 +121,6 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
       setError(null);
       recognitionRef.current.start();
     } catch (err) {
-      console.error('Failed to start recognition:', err);
       setError('Failed to start voice input');
     }
   };
@@ -134,7 +132,6 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     try {
       recognitionRef.current.stop();
     } catch (err) {
-      console.error('Failed to stop recognition:', err);
     }
   };
 
@@ -154,7 +151,6 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event);
       setIsSpeaking(false);
     };
 
@@ -303,7 +299,6 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 export const useVoiceAssistant = (language: 'sw' | 'en' = 'sw') => {
   const speak = (text: string) => {
     if (!window.speechSynthesis) {
-      console.warn('Speech synthesis not supported');
       return;
     }
 

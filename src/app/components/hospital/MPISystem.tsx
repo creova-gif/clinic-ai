@@ -202,13 +202,6 @@ export const MPISystem: React.FC<MPISystemProps> = ({ facilityId, onPatientSelec
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Create audit trail entry
-    console.log('Merging patients:', {
-      keep: keepPatientId,
-      merge: mergePatientId,
-      reason,
-      timestamp: new Date(),
-      facilityId
-    });
     
     setLoading(false);
     setShowMergeModal(false);

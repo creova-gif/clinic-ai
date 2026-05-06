@@ -20,7 +20,11 @@ import { useApp } from '../context/AppContext';
 import { Button } from './ui/button';
 import { api } from '@/app/services/api';
 import type { Medication as ApiMedication } from '@/app/services/supabase';
+import { getAuthUserId } from '@/app/utils/auth';
 import { toast } from 'sonner';
+
+const MOCK_USER_ID = 'mock_user_001';
+
 
 const translations = {
   sw: {
@@ -101,12 +105,11 @@ export function MedicationTracker({ onBack }: { onBack: () => void }) {
 
   const loadMedications = async () => {
     setIsLoading(true);
-    const userId = 'user_001'; // TODO: Get from auth context
+    const userId = await getAuthUserId() ?? MOCK_USER_ID;
     const response = await api.medications.list(userId);
     if (response.success && response.data) {
       setMedications(response.data);
     } else {
-      console.error('Failed to load medications:', response.error);
       toast.error(language === 'sw' ? 'Imeshindwa kupakia dawa' : 'Failed to load medications');
     }
     setIsLoading(false);

@@ -14,9 +14,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// DEPLOYMENT: Replace with actual Supabase project credentials
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+// DEPLOYMENT: Set these in .env.local (see .env.example)
+// Vite exposes env vars via import.meta.env.VITE_*, NOT process.env
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Singleton instance to prevent multiple clients
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
@@ -410,24 +411,23 @@ export type MedicationDispenseUpdate = Partial<MedicationDispenseInsert>;
 
 // Helper function to check if Supabase is configured
 export function isSupabaseConfigured(): boolean {
-  return (
-    SUPABASE_URL !== 'https://your-project.supabase.co' &&
-    SUPABASE_ANON_KEY !== 'your-anon-key'
-  );
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 }
 
-// Mock mode check
+// Mock mode check — true when no env vars are set
 export const USE_MOCK_DATA = !isSupabaseConfigured();
 
 if (USE_MOCK_DATA) {
-  console.info(
-    '%c🎭 AfyaCare Development Mode',
-    'background: #FEF3C7; color: #92400E; padding: 8px 12px; border-radius: 4px; font-weight: bold;',
-    '\n\n✅ Running with mock data (safe for development)\n' +
-    '📊 All features work with realistic test data\n' +
-    '🔌 To enable production mode, add to .env.local:\n' +
-    '   NEXT_PUBLIC_SUPABASE_URL=your-project-url\n' +
-    '   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key\n\n' +
-    'See /SUPABASE_INTEGRATION.md for setup instructions.\n'
-  );
+  // Only log in development to avoid noisy production logs
+  if (import.meta.env.DEV) {
+    console.info(
+      '%c🎭 AfyaCare Development Mode',
+      'background: #FEF3C7; color: #92400E; padding: 8px 12px; border-radius: 4px; font-weight: bold;',
+      '\n\n✅ Running with mock data (safe for development)\n' +
+      '📊 All features work with realistic test data\n' +
+      '🔌 To enable production mode, copy .env.example → .env.local and fill in:\n' +
+      '   VITE_SUPABASE_URL=your-project-url\n' +
+      '   VITE_SUPABASE_ANON_KEY=your-anon-key\n'
+    );
+  }
 }

@@ -10,7 +10,11 @@ import { Button } from './ui/button';
 import { motion } from 'motion/react';
 import { api } from '@/app/services/api';
 import type { Appointment as ApiAppointment, Facility as ApiFacility } from '@/app/services/supabase';
+import { getAuthUserId } from '@/app/utils/auth';
 import { toast } from 'sonner';
+
+const MOCK_USER_ID = 'mock_user_001';
+
 
 interface AppointmentSystemProps {
   language: 'sw' | 'en';
@@ -69,12 +73,11 @@ export function AppointmentSystem({ language, onBack }: AppointmentSystemProps) 
 
   const loadAppointments = async () => {
     setIsLoading(true);
-    const userId = 'user_001'; // TODO: Get from auth context
+    const userId = await getAuthUserId() ?? MOCK_USER_ID;
     const response = await api.appointments.list(userId);
     if (response.success && response.data) {
       setAppointments(response.data);
     } else {
-      console.error('Failed to load appointments:', response.error);
       toast.error(language === 'sw' ? 'Imeshindwa kupakia miadi' : 'Failed to load appointments');
     }
     setIsLoading(false);
@@ -296,7 +299,7 @@ export function AppointmentSystem({ language, onBack }: AppointmentSystemProps) 
     setIsLoading(true);
 
     try {
-      const userId = 'user_001'; // TODO: Get from auth context
+      const userId = await getAuthUserId() ?? MOCK_USER_ID;
       const response = await api.appointments.create({
         user_id: userId,
         facility_id: bookingData.facility.id,
@@ -333,7 +336,6 @@ export function AppointmentSystem({ language, onBack }: AppointmentSystemProps) 
         throw response.error || new Error('Failed to book appointment');
       }
     } catch (error) {
-      console.error('Booking error:', error);
       toast.error(
         language === 'sw'
           ? 'Imeshindwa kupanga miadi. Tafadhali jaribu tena.'

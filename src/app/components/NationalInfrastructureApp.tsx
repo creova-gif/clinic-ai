@@ -29,7 +29,7 @@ import { EliteRecords } from './EliteRecords';
 import { EmergencyScreen } from './EmergencyScreen';
 import { NationalBottomNav } from './NationalBottomNav';
 import { ConnectivityIndicator } from './ConnectivityIndicator';
-import { MedicalButton } from '@/app/design-system';
+import { WifiOff } from 'lucide-react';
 import { colors } from '@/app/design-system';
 import { EnhancedSymptomChecker } from './EnhancedSymptomChecker';
 import { AppointmentSystem } from './AppointmentSystem';
@@ -71,7 +71,7 @@ export function NationalInfrastructureApp() {
   const [currentRoute, setCurrentRoute] = useState<Route>('home');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Check saved user data
+  // Check saved user data on mount
   useEffect(() => {
     try {
       const saved = SecureStorage.getItem('afyacare_national_user');
@@ -79,16 +79,12 @@ export function NationalInfrastructureApp() {
         try {
           const parsed = JSON.parse(saved);
           setUserData(parsed);
-          console.log('✅ User data loaded:', parsed);
-        } catch (e) {
-          console.error('Failed to parse user data:', e);
+        } catch {
           SecureStorage.removeItem('afyacare_national_user');
         }
-      } else {
-        console.log('ℹ️ No saved user data found');
       }
-    } catch (error) {
-      console.error('Storage access error:', error);
+    } catch {
+      // Storage unavailable — fall through to onboarding
     }
   }, []);
 
@@ -108,25 +104,17 @@ export function NationalInfrastructureApp() {
 
   // Handlers
   const handleSplashComplete = () => {
-    console.log('🎬 Splash complete');
     setShowSplash(false);
-    if (!userData) {
-      console.log('📝 No user data, showing onboarding');
-      setShowOnboarding(true);
-    } else {
-      console.log('👤 User data exists, going to home');
-    }
+    if (!userData) setShowOnboarding(true);
   };
 
   const handleOnboardingComplete = (data: UserData) => {
-    console.log('✅ Onboarding complete:', data);
     setUserData(data);
     SecureStorage.setItem('afyacare_national_user', JSON.stringify(data));
     setShowOnboarding(false);
   };
 
   const handleLogout = () => {
-    console.log('👋 Logging out');
     SecureStorage.removeItem('afyacare_national_user');
     setUserData(null);
     setCurrentRoute('home');
@@ -134,48 +122,31 @@ export function NationalInfrastructureApp() {
   };
 
   const handleNavigate = (route: string) => {
-    console.log('🧭 Navigating to:', route);
     setCurrentRoute(route as Route);
   };
 
-  // Debug info
-  useEffect(() => {
-    console.log('📊 App State:', {
-      showSplash,
-      showOnboarding,
-      hasUserData: !!userData,
-      currentRoute,
-      isOnline
-    });
-  }, [showSplash, showOnboarding, userData, currentRoute, isOnline]);
-
   // Show splash
-  if (showSplash) {
-    console.log('🎬 Rendering splash screen');
-    return <NationalSplash onComplete={handleSplashComplete} />;
-  }
+  if (showSplash) return <NationalSplash onComplete={handleSplashComplete} />;
 
   // Show onboarding
   if (showOnboarding || !userData) {
-    console.log('📝 Rendering onboarding');
     return <NationalOnboarding onComplete={handleOnboardingComplete} />;
   }
 
   const language = userData.language;
-  console.log('🏠 Rendering main app, route:', currentRoute);
 
   // Main App
   return (
     <div className="min-h-screen bg-[#F7F9FB]">
-      {/* Connectivity Indicator - Always visible */}
-      <div className="fixed top-4 left-4 z-50">
-        {!isOnline && (
+      {/* Offline indicator */}
+      {!isOnline && (
+        <div className="fixed top-4 left-4 z-50">
           <div className="flex items-center gap-2 px-3 py-2 bg-[#FEF2F2] border-2 rounded-lg text-sm font-medium" style={{ borderColor: colors.danger[500], color: colors.danger[700] }}>
-            <MedicalButton className="w-4 h-4" />
+            <WifiOff className="w-4 h-4" />
             <span>{language === 'sw' ? 'Nje ya mtandao' : 'Offline'}</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Route Content */}
       {currentRoute === 'home' && (

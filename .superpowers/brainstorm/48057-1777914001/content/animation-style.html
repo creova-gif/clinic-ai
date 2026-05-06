@@ -1,0 +1,210 @@
+<h2>What should motion feel like?</h2>
+<p class="subtitle">These are live — click each card to trigger the animation and feel it.</p>
+
+<style>
+  .anim-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
+  .anim-card { border: 2px solid #e2e8f0; border-radius: 16px; overflow: hidden; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; background: white; }
+  .anim-card:hover { border-color: #6366f1; }
+  .anim-card.selected { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+  .demo-area { height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: #F8FAFF; position: relative; overflow: hidden; padding: 16px; }
+  .demo-btn { padding: 10px 20px; border: none; border-radius: 10px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; background: linear-gradient(135deg, #312e81, #f97316); }
+  .card-label { padding: 12px 14px; border-top: 1px solid #f1f5f9; }
+  .card-title { font-size: 13px; font-weight: 700; color: #1e293b; }
+  .card-desc { font-size: 11px; color: #64748b; margin-top: 3px; line-height: 1.4; }
+  .tag { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 8px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* ── REFINED: subtle, clinical ── */
+  .refined-chip {
+    padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px; background: white;
+    border: 1.5px solid #e2e8f0; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    opacity: 0; transition: opacity 0.25s ease, transform 0.25s ease;
+    transform: translateY(6px);
+  }
+  .refined-chip.show { opacity: 1; transform: translateY(0); }
+  .refined-chip:nth-child(1) { transition-delay: 0s; }
+  .refined-chip:nth-child(2) { transition-delay: 0.06s; }
+  .refined-chip:nth-child(3) { transition-delay: 0.12s; }
+  .refined-chip:nth-child(4) { transition-delay: 0.18s; }
+  .refined-stat { font-size: 22px; font-weight: 800; color: #312e81; opacity: 0; transition: opacity 0.3s ease; }
+  .refined-stat.show { opacity: 1; }
+  .r-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ── FLUID: spring physics ── */
+  @keyframes springIn {
+    0% { transform: scale(0.4) translateY(30px); opacity: 0; }
+    60% { transform: scale(1.08) translateY(-4px); opacity: 1; }
+    80% { transform: scale(0.97) translateY(2px); }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  @keyframes slideUp {
+    0% { transform: translateY(40px); opacity: 0; }
+    60% { transform: translateY(-5px); opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  .fluid-card {
+    background: white; border-radius: 14px; padding: 12px 16px; width: 90%;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-left: 4px solid #f97316;
+    opacity: 0; transform: scale(0.4) translateY(30px);
+  }
+  .fluid-card.show { animation: springIn 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .fluid-card:nth-child(1) { animation-delay: 0s; }
+  .fluid-card:nth-child(2) { animation-delay: 0.08s; }
+  .fluid-card:nth-child(3) { animation-delay: 0.16s; }
+  .fluid-card-title { font-size: 11px; font-weight: 700; color: #1e1b4b; }
+  .fluid-card-sub { font-size: 9px; color: #64748b; margin-top: 2px; }
+  .fluid-score {
+    font-size: 36px; font-weight: 900; color: #312e81;
+    opacity: 0; transform: translateY(40px);
+    display: block; text-align: center;
+  }
+  .fluid-score.show { animation: slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+  /* ── EXPRESSIVE: bold, celebratory ── */
+  @keyframes popIn {
+    0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+    70% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-60px) scale(0.5); opacity: 0; }
+  }
+  .exp-score {
+    font-size: 48px; font-weight: 900; text-align: center;
+    background: linear-gradient(90deg, #312e81, #f97316, #10b981, #312e81);
+    background-size: 200% auto;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    opacity: 0; transform: scale(0) rotate(-10deg);
+  }
+  .exp-score.show { animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards, shimmer 2s linear infinite; }
+  .exp-label {
+    font-size: 13px; font-weight: 800; color: #1e1b4b;
+    text-align: center; opacity: 0;
+  }
+  .exp-label.show { animation: popIn 0.5s 0.15s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .exp-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .exp-chip {
+    padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    color: white; opacity: 0; transform: scale(0) rotate(-10deg);
+  }
+  .exp-chip.show { animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .exp-chip:nth-child(1) { animation-delay: 0.2s; background: #6366f1; }
+  .exp-chip:nth-child(2) { animation-delay: 0.28s; background: #f97316; }
+  .exp-chip:nth-child(3) { animation-delay: 0.36s; background: #10b981; }
+  .confetti { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+  .dot-particle {
+    position: absolute; width: 6px; height: 6px; border-radius: 50%; opacity: 0;
+  }
+  .dot-particle.burst { animation: floatUp 0.8s ease-out forwards; }
+</style>
+
+<div class="anim-grid">
+
+  <!-- REFINED -->
+  <div class="anim-card" data-choice="refined" onclick="toggleSelect(this)" id="card-refined">
+    <div class="demo-area" id="demo-refined">
+      <div class="refined-stat" id="refined-stat">87</div>
+      <div class="refined-chip" id="rc1"><div class="r-dot" style="background:#10b981"></div> Dawa ✓</div>
+      <div class="refined-chip" id="rc2"><div class="r-dot" style="background:#6366f1"></div> BP 120/80</div>
+      <div class="refined-chip" id="rc3"><div class="r-dot" style="background:#f97316"></div> Miadi Ijumaa</div>
+      <div class="refined-chip" id="rc4"><div class="r-dot" style="background:#f59e0b"></div> Uzito 68kg</div>
+      <button class="demo-btn" onclick="event.stopPropagation(); playRefined()">▶ Play</button>
+    </div>
+    <div class="card-label">
+      <div class="tag" style="background:#EEF2FF;color:#6366f1;">Subtle · Clinical</div>
+      <div class="card-title">Refined</div>
+      <div class="card-desc">Gentle fades, 200–300ms ease-out. Elements slide in softly on load. Premium and calm.</div>
+    </div>
+  </div>
+
+  <!-- FLUID -->
+  <div class="anim-card" data-choice="fluid" onclick="toggleSelect(this)" id="card-fluid">
+    <div class="demo-area" id="demo-fluid" style="gap:8px;">
+      <span class="fluid-score" id="fluid-score">87</span>
+      <div class="fluid-card" id="fc1"><div class="fluid-card-title">💊 Metformin 500mg</div><div class="fluid-card-sub">Leo asubuhi — imechukuliwa ✓</div></div>
+      <div class="fluid-card" id="fc2" style="border-color:#6366f1"><div class="fluid-card-title">📅 Dk. Hassan</div><div class="fluid-card-sub">Hospitali ya Muhimbili · Ijumaa</div></div>
+      <button class="demo-btn" style="margin-top:4px" onclick="event.stopPropagation(); playFluid()">▶ Play</button>
+    </div>
+    <div class="card-label">
+      <div class="tag" style="background:#FFF7ED;color:#f97316;">Spring · Bouncy ⭐</div>
+      <div class="card-title">Fluid</div>
+      <div class="card-desc">Spring physics — overshoot and settle. Cards bounce in, score counts up. Feels alive.</div>
+    </div>
+  </div>
+
+  <!-- EXPRESSIVE -->
+  <div class="anim-card" data-choice="expressive" onclick="toggleSelect(this)" id="card-exp">
+    <div class="demo-area" id="demo-exp" style="position:relative;">
+      <div class="confetti" id="confetti-area"></div>
+      <div class="exp-score" id="exp-score">87</div>
+      <div class="exp-label" id="exp-label">Afya Nzuri Sana! 🎉</div>
+      <div class="exp-chips">
+        <div class="exp-chip" id="ec1">✅ Dawa</div>
+        <div class="exp-chip" id="ec2">🔥 Streak 7</div>
+        <div class="exp-chip" id="ec3">⭐ +10 pts</div>
+      </div>
+      <button class="demo-btn" style="margin-top:8px" onclick="event.stopPropagation(); playExpressive()">▶ Play</button>
+    </div>
+    <div class="card-label">
+      <div class="tag" style="background:#F0FDF4;color:#10b981;">Bold · Celebratory</div>
+      <div class="card-title">Expressive</div>
+      <div class="card-desc">Pop-scale entrances, gradient shimmer, confetti on milestones. High energy for wins.</div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:20px;text-align:center;">Hit ▶ Play to feel the motion, then click the card to lock it in.</p>
+
+<script>
+function resetEl(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('show'); void el.offsetWidth; }
+}
+
+function playRefined() {
+  ['refined-stat','rc1','rc2','rc3','rc4'].forEach(resetEl);
+  setTimeout(() => document.getElementById('refined-stat').classList.add('show'), 50);
+  setTimeout(() => document.getElementById('rc1').classList.add('show'), 100);
+  setTimeout(() => document.getElementById('rc2').classList.add('show'), 180);
+  setTimeout(() => document.getElementById('rc3').classList.add('show'), 260);
+  setTimeout(() => document.getElementById('rc4').classList.add('show'), 340);
+}
+
+function playFluid() {
+  ['fluid-score','fc1','fc2'].forEach(resetEl);
+  setTimeout(() => document.getElementById('fluid-score').classList.add('show'), 50);
+  setTimeout(() => document.getElementById('fc1').classList.add('show'), 150);
+  setTimeout(() => document.getElementById('fc2').classList.add('show'), 250);
+}
+
+function playExpressive() {
+  ['exp-score','exp-label','ec1','ec2','ec3'].forEach(resetEl);
+  // Burst confetti
+  const area = document.getElementById('confetti-area');
+  area.innerHTML = '';
+  const colors = ['#6366f1','#f97316','#10b981','#f59e0b','#ec4899'];
+  for (let i = 0; i < 18; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot-particle';
+    d.style.cssText = `left:${20+Math.random()*60}%;top:${30+Math.random()*40}%;background:${colors[i%colors.length]};animation-delay:${Math.random()*0.4}s;animation-duration:${0.6+Math.random()*0.5}s;`;
+    area.appendChild(d);
+    setTimeout(() => d.classList.add('burst'), 10);
+  }
+  setTimeout(() => document.getElementById('exp-score').classList.add('show'), 80);
+  setTimeout(() => document.getElementById('exp-label').classList.add('show'), 220);
+  setTimeout(() => document.getElementById('ec1').classList.add('show'), 350);
+  setTimeout(() => document.getElementById('ec2').classList.add('show'), 440);
+  setTimeout(() => document.getElementById('ec3').classList.add('show'), 530);
+}
+
+// Auto-play on load
+setTimeout(playRefined, 400);
+setTimeout(playFluid, 600);
+setTimeout(playExpressive, 800);
+</script>

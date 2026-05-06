@@ -3,17 +3,35 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
   ],
   resolve: {
     alias: {
-      // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
     },
   },
-})
+  esbuild: {
+    // Strip console.log and debugger statements in production to prevent PII leaking
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
+  },
+  build: {
+    sourcemap: mode !== 'production', // Only sourcemaps in dev
+    rollupOptions: {
+      output: {
+        // Code splitting for faster initial load
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+          charts: ['recharts'],
+          motion: ['motion'],
+          ui: ['lucide-react'],
+        },
+      },
+    },
+  },
+}))
+
