@@ -50,15 +50,20 @@ export default defineConfig(({ mode }) => ({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  define: {
+    'process.env': {},
+  },
+  server: {
+    host: '0.0.0.0',
+    allowedHosts: true,
+  },
   esbuild: {
-    // Strip console.log and debugger statements in production to prevent PII leaking
     drop: mode === 'production' ? ['console', 'debugger'] : [],
   },
   build: {
-    sourcemap: mode !== 'production', // Only sourcemaps in dev
+    sourcemap: mode !== 'production',
     rollupOptions: {
       output: {
-        // Code splitting for faster initial load
         manualChunks: {
           react: ['react', 'react-dom'],
           router: ['react-router-dom'],
@@ -71,4 +76,3 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }))
-
