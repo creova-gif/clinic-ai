@@ -170,14 +170,11 @@ function AppContent() {
     setShowOnboarding(false);
   };
 
-  const handleEnhancementComplete = (data: any) => {
-    console.log('Enhancement onboarding completed:', data);
-    // Store enhancement data if needed
+  const handleEnhancementComplete = (_data: any) => {
+    // Enhancement onboarding complete — no PHI logged
   };
 
-  const handleFeedbackSubmit = (feedback: { rating: number; comment?: string }) => {
-    console.log('User feedback:', feedback);
-    // Send feedback to analytics/backend
+  const handleFeedbackSubmit = (_feedback: { rating: number; comment?: string }) => {
     setShowFeedback(false);
   };
 
@@ -261,9 +258,7 @@ function AppContent() {
         {/* Patient Portal Manager - Comprehensive portal enhancement system */}
         <PatientPortalManager
           enabled={true}
-          onPortalDataUpdate={(data) => {
-            console.log('Portal data updated:', data);
-          }}
+          onPortalDataUpdate={(_data) => { /* portal data synced */ }}
         />
         
         {/* Onboarding Enhancement Manager */}
@@ -312,9 +307,25 @@ function AppContent() {
             <AppointmentsScreen onBack={() => setCurrentRoute('dashboard')} />
           )}
           {currentRoute === 'profile' && (
-            <ProfileScreen 
-              onBack={() => setCurrentRoute('dashboard')} 
+            <ProfileScreen
+              language={language as 'sw' | 'en'}
+              onBack={() => setCurrentRoute('dashboard')}
+              onNavigate={setCurrentRoute}
+              onLanguageChange={(lang) => setLanguage(lang as any)}
               onLogout={handleLogout}
+              userRole="patient"
+              userData={{
+                name: userData?.name || (language === 'sw' ? 'Mtumiaji' : 'User'),
+                dateOfBirth: userData?.dateOfBirth || '1990-01-01',
+                gender: userData?.gender || (language === 'sw' ? 'Haijulikani' : 'Unknown'),
+                phone: userData?.phone || '',
+                email: userData?.email,
+                afyaId: userData?.afyaId || 'AFY-000000',
+                bloodType: userData?.bloodType,
+                allergies: userData?.allergies || [],
+                chronicConditions: userData?.chronicConditions || [],
+                emergencyContacts: userData?.emergencyContacts || [],
+              }}
             />
           )}
           {currentRoute === 'maternal' && (
