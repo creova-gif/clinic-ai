@@ -42,6 +42,10 @@ const FacilityFinder = lazy(() => import('./components/FacilityFinder').then(m =
 const CHWRouteOptimizer = lazy(() => import('./components/CHWRouteOptimizer').then(m => ({ default: m.CHWRouteOptimizer })));
 const SafetyDisclaimerModal = lazy(() => import('./components/SafetyDisclaimerModal').then(m => ({ default: m.SafetyDisclaimerModal })));
 const AdminMonitoringDashboard = lazy(() => import('./components/AdminMonitoringDashboard').then(m => ({ default: m.AdminMonitoringDashboard })));
+const TelemedicineInterface = lazy(() => import('./components/TelemedicineInterface').then(m => ({ default: m.TelemedicineInterface })));
+const TestResultsViewer = lazy(() => import('./components/TestResultsViewer').then(m => ({ default: m.TestResultsViewer })));
+const EmergencyScreen = lazy(() => import('./components/EmergencyScreen').then(m => ({ default: m.EmergencyScreen })));
+const ClinicalDashboard = lazy(() => import('./components/ClinicalDashboard').then(m => ({ default: m.ClinicalDashboard })));
 
 // Loading components - Premium skeleton states
 import { SkeletonDashboardGrid, Spinner } from './components/ui/skeleton';
@@ -319,28 +323,44 @@ function AppContent() {
           {currentRoute === 'medications' && (
             <MedicationTracker onBack={() => setCurrentRoute('dashboard')} />
           )}
-          {currentRoute === 'facilities' && (
+          {(currentRoute === 'facilities' || currentRoute === 'clinic-finder') && (
             <FacilityFinder onBack={() => setCurrentRoute('dashboard')} />
           )}
-        </Suspense>
-
-        {(currentRoute === 'ncds' || currentRoute === 'telemedicine') && (
-          <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl mb-4">
-                {language === 'sw' ? 'Inakuja Hivi Karibuni' : 'Coming Soon'}
-              </h2>
-              <p className="text-gray-600 mb-4">
-                {language === 'sw'
-                  ? 'Kipengele hiki kinajengwa.'
-                  : 'This feature is being built.'}
-              </p>
-              <Button onClick={() => setCurrentRoute('dashboard')}>
-                {language === 'sw' ? 'Rudi Nyumbani' : 'Back to Home'}
-              </Button>
+          {currentRoute === 'emergency' && (
+            <EmergencyScreen
+              language={language as 'sw' | 'en'}
+            />
+          )}
+          {(currentRoute === 'telemedicine' || currentRoute === 'talk-to-doctor') && (
+            <TelemedicineInterface
+              language={language as 'sw' | 'en'}
+              onBack={() => setCurrentRoute('dashboard')}
+            />
+          )}
+          {(currentRoute === 'results-help' || currentRoute === 'health-records') && (
+            <TestResultsViewer
+              language={language as 'sw' | 'en'}
+              onBack={() => setCurrentRoute('dashboard')}
+            />
+          )}
+          {currentRoute === 'ncds' && (
+            <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl mb-4">
+                  {language === 'sw' ? 'Inakuja Hivi Karibuni' : 'Coming Soon'}
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  {language === 'sw'
+                    ? 'Kipengele hiki kinajengwa.'
+                    : 'This feature is being built.'}
+                </p>
+                <Button onClick={() => setCurrentRoute('dashboard')}>
+                  {language === 'sw' ? 'Rudi Nyumbani' : 'Back to Home'}
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </Suspense>
         <BottomNavigation
           activeRoute={currentRoute}
           onNavigate={handleNavigateWithDisclaimer}
@@ -378,12 +398,12 @@ function AppContent() {
     );
   }
 
-  // Clinician role (similar to patient for demo)
+  // Clinician role
   if (userRole === 'clinician') {
     return (
       <>
         <LanguageToggle />
-        
+
         {/* Onboarding Enhancement Manager */}
         <OnboardingEnhancementManager
           language={language}
@@ -392,21 +412,13 @@ function AppContent() {
           onEnhancementComplete={handleEnhancementComplete}
         />
 
-        <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
-          <div className="text-center max-w-lg">
-            <h2 className="text-3xl mb-4">
-              {language === 'sw' ? 'Dashibodi ya Daktari' : 'Clinician Dashboard'}
-            </h2>
-            <p className="text-gray-600 mb-4">
-              {language === 'sw'
-                ? 'Kipengele cha daktari kinajengwa. Itajumuisha: Maelezo ya wagonjwa, AI diagnosis support, Medical imaging analysis, Prescription management.'
-                : 'Clinician features being built. Will include: Patient records, AI diagnosis support, Medical imaging analysis, Prescription management.'}
-            </p>
-            <Button onClick={handleLogout}>
-              {language === 'sw' ? 'Rudi' : 'Back'}
-            </Button>
-          </div>
-        </div>
+        <Suspense fallback={<DashboardLoader />}>
+          <ClinicalDashboard
+            language={language as 'sw' | 'en'}
+            onLogout={handleLogout}
+            providerName="Dr. Clinician"
+          />
+        </Suspense>
       </>
     );
   }
