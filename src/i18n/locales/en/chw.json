@@ -1,0 +1,23 @@
+{
+  "title": "Route Planner",
+  "subtitle": "Plan your visits efficiently",
+  "todayRoute": "Today's Route",
+  "optimize": "Optimize Route",
+  "startRoute": "Start Route",
+  "totalDistance": "Total Distance",
+  "estimatedTime": "Estimated Time",
+  "visits": "Visits",
+  "urgent": "Urgent",
+  "routine": "Routine",
+  "visitOrder": "Visit Order",
+  "patient": "Patient",
+  "reason": "Reason",
+  "priority": "Priority",
+  "completed": "Completed",
+  "pending": "Pending",
+  "markComplete": "Mark Complete",
+  "navigate": "Navigate",
+  "optimized": "Optimized",
+  "manual": "Manual",
+  "minutes": "min"
+}

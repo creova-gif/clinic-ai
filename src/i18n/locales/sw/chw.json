@@ -1,0 +1,23 @@
+{
+  "title": "Ratibu Ziara",
+  "subtitle": "Panga ziara zako kwa ufanisi",
+  "todayRoute": "Njia ya Leo",
+  "optimize": "Boresha Njia",
+  "startRoute": "Anza Ziara",
+  "totalDistance": "Umbali Jumla",
+  "estimatedTime": "Muda Uliokadiriwa",
+  "visits": "Ziara",
+  "urgent": "Dharura",
+  "routine": "Kawaida",
+  "visitOrder": "Mpangilio wa Ziara",
+  "patient": "Mgonjwa",
+  "reason": "Sababu",
+  "priority": "Kipaumbele",
+  "completed": "Imekamilika",
+  "pending": "Inasubiri",
+  "markComplete": "Weka Imekamilika",
+  "navigate": "Elekeza",
+  "optimized": "Imeboreshwa",
+  "manual": "Wewe Mwenyewe",
+  "minutes": "dakika"
+}

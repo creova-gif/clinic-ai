@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import {
   Users,
   Home,
@@ -12,11 +13,12 @@ import {
   Activity,
   Zap,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
 import { useApp } from '@/app/context/AppContext';
+import { HeroHeader } from '@/app/components/ui/HeroHeader';
+import { OfflineBanner } from '@/app/components/ui/OfflineBanner';
+import { AnimatedButton } from '@/app/components/ui/AnimatedButton';
+import { StatusBadge } from '@/app/components/ui/StatusBadge';
 
 const translations = {
   sw: {
@@ -34,7 +36,6 @@ const translations = {
     coverage: 'Ufikaji',
     performance: 'Utendaji',
     back: 'Rudi',
-    // NEW: Enhanced priority section
     urgentAction: 'Hatua za Haraka',
     aiRecommends: 'AI Inapendekeza',
     urgentPatients: 'Wagonjwa wa Haraka',
@@ -63,7 +64,6 @@ const translations = {
     coverage: 'Coverage',
     performance: 'Performance',
     back: 'Back',
-    // NEW: Enhanced priority section
     urgentAction: 'Urgent Action Required',
     aiRecommends: 'AI Recommends',
     urgentPatients: 'Urgent Patients',
@@ -88,7 +88,6 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
   const { language } = useApp();
   const t = translations[language];
 
-  // ENHANCED: Priority patients with AI-generated risk scores and actions
   const priorityHouseholds = [
     {
       id: '1',
@@ -156,280 +155,246 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
     },
   ];
 
-  // Sort by risk score (highest first)
   const sortedPriorities = [...priorityHouseholds].sort((a, b) => b.riskScore - a.riskScore);
 
-  const getRiskBadgeColor = (risk: string) => {
+  const getRiskBorderClass = (risk: string) => {
     switch (risk) {
-      case 'critical':
-        return 'bg-red-600 text-white animate-pulse';
-      case 'high':
-        return 'bg-orange-600 text-white';
-      case 'medium':
-        return 'bg-yellow-600 text-white';
-      default:
-        return 'bg-green-600 text-white';
+      case 'critical': return 'border-l-[4px] border-l-[#ef4444]';
+      case 'high': return 'border-l-[4px] border-l-[#f97316]';
+      case 'medium': return 'border-l-[4px] border-l-[#f59e0b]';
+      default: return 'border-l-[4px] border-l-[#10b981]';
     }
   };
 
-  const getRiskIcon = (risk: string) => {
+  const getRiskBadgeVariant = (risk: string): 'danger' | 'warning' | 'normal' => {
     switch (risk) {
-      case 'critical':
-        return <AlertTriangle className="w-4 h-4" />;
-      case 'high':
-        return <Activity className="w-4 h-4" />;
-      default:
-        return <CheckCircle className="w-4 h-4" />;
+      case 'critical': return 'danger';
+      case 'high': return 'warning';
+      default: return 'normal';
+    }
+  };
+
+  const getRiskLabel = (risk: string, score: number) => {
+    switch (risk) {
+      case 'critical': return `${language === 'sw' ? 'Hatari Kubwa' : 'Critical'} ${score}`;
+      case 'high': return `${language === 'sw' ? 'Juu' : 'High'} ${score}`;
+      case 'medium': return `${language === 'sw' ? 'Wastani' : 'Medium'} ${score}`;
+      default: return `${language === 'sw' ? 'Chini' : 'Low'} ${score}`;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        <Button variant="ghost" onClick={onBack} className="mb-4">
+    <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+      <OfflineBanner />
+      <HeroHeader greeting="Dawa za Jamii" />
+
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <AnimatedButton
+          type="button"
+          aria-label={t.back}
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="mb-4"
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t.back}
-        </Button>
-
-        <h1 className="text-3xl md:text-4xl mb-6">{t.title}</h1>
+        </AnimatedButton>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                {t.households}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">156</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                {t.visits}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">8</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                {t.highRisk}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-red-600">12</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                {t.referrals}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">5</div>
-            </CardContent>
-          </Card>
+          {[
+            { icon: <Home className="h-5 w-5 text-[#6366f1]" />, value: '156', label: t.households },
+            { icon: <Calendar className="h-5 w-5 text-[#10b981]" />, value: '8', label: t.visits, valueClass: 'text-[#10b981]' },
+            { icon: <AlertTriangle className="h-5 w-5 text-[#ef4444]" />, value: '12', label: t.highRisk, valueClass: 'text-[#ef4444]' },
+            { icon: <TrendingUp className="h-5 w-5 text-[#f97316]" />, value: '5', label: t.referrals, valueClass: 'text-[#f97316]' },
+          ].map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.07 }}
+              className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-4"
+            >
+              <div className="flex items-center gap-2 mb-1 text-sm text-gray-500">
+                {stat.icon}
+                <span>{stat.label}</span>
+              </div>
+              <div className={`text-3xl font-bold ${stat.valueClass ?? 'text-[#1e1b4b]'}`}>{stat.value}</div>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Route Optimizer Button - Prominent CTA */}
+        {/* Route Optimizer CTA */}
         {onNavigate && (
-          <button
+          <AnimatedButton
+            type="button"
+            aria-label={t.planRoute}
+            variant="primary"
+            fullWidth
+            size="lg"
             onClick={() => onNavigate('route-optimizer')}
-            className="w-full mb-6 p-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
+            className="mb-6 p-6 rounded-2xl justify-between"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <MapPin className="h-8 w-8 text-white" strokeWidth={2} />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-xl font-semibold mb-1">{t.planRoute}</h3>
-                  <p className="text-sm text-blue-100">{t.planRouteDesc}</p>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                <MapPin className="h-8 w-8 text-white" strokeWidth={2} />
               </div>
-              <ArrowLeft className="h-6 w-6 text-white/60 group-hover:text-white/100 transition-colors rotate-180" />
+              <div className="text-left">
+                <h3 className="text-xl font-semibold mb-1">{t.planRoute}</h3>
+                <p className="text-sm text-white/80">{t.planRouteDesc}</p>
+              </div>
             </div>
-          </button>
+            <ArrowLeft className="h-6 w-6 text-white/60 rotate-180" />
+          </AnimatedButton>
         )}
 
         {/* AI Priority List */}
-        <Card className="mb-6 border-l-4 border-l-red-500 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <Zap className="h-6 w-6 text-red-600" />
-                {t.urgentAction}
-              </CardTitle>
-              <Badge className="bg-red-600 text-white text-sm px-3 py-1">
-                {sortedPriorities.length} {t.urgentPatients}
-              </Badge>
+        <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] mb-6 border-l-[4px] border-l-[#ef4444] overflow-hidden">
+          <div className="bg-gradient-to-r from-red-50 to-orange-50 px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="h-6 w-6 text-[#ef4444]" />
+              <h2 className="text-xl font-semibold text-[#1e1b4b]">{t.urgentAction}</h2>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
-              {t.aiRecommends}
-            </p>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-gray-200">
-              {sortedPriorities.map((household) => (
-                <div key={household.id} className="p-5 hover:bg-gray-50 transition-colors">
-                  {/* Header: Name + Risk Score */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-lg font-bold text-gray-900">{household.name}</h3>
-                        <Badge className={getRiskBadgeColor(household.risk)}>
-                          {getRiskIcon(household.risk)}
-                          <span className="ml-1.5">{household.riskScore}</span>
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {household.age} {language === 'sw' ? 'miaka' : 'years old'} • {household.status}
-                      </p>
+            <StatusBadge variant="danger" label={`${sortedPriorities.length} ${t.urgentPatients}`} />
+          </div>
+          <p className="text-sm text-gray-500 px-5 py-2 border-b border-gray-100">{t.aiRecommends}</p>
+
+          <div className="divide-y divide-gray-100">
+            {sortedPriorities.map((household, idx) => (
+              <motion.div
+                key={household.id}
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.07 }}
+                className={`p-5 hover:bg-gray-50 transition-colors bg-white ${getRiskBorderClass(household.risk)}`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-lg font-bold text-[#1e1b4b]">{household.name}</h3>
+                      <StatusBadge
+                        variant={getRiskBadgeVariant(household.risk)}
+                        label={getRiskLabel(household.risk, household.riskScore)}
+                      />
                     </div>
-                  </div>
-
-                  {/* Reason */}
-                  <div className="bg-gray-50 border-l-4 border-l-blue-500 p-3 rounded mb-3">
-                    <p className="text-sm font-medium text-gray-900">{household.reason}</p>
-                  </div>
-
-                  {/* AI Action Recommendation */}
-                  <div className="bg-blue-50 border-l-4 border-l-blue-600 p-3 rounded mb-3">
-                    <div className="flex items-start gap-2">
-                      <Zap className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-semibold text-blue-900 uppercase mb-1">
-                          {t.aiRecommends}
-                        </p>
-                        <p className="text-sm text-blue-800">{household.aiAction}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Metadata */}
-                  <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{t.lastVisit}: {household.lastVisit}</span>
-                    </div>
-                    {household.daysOverdue > 0 && (
-                      <Badge variant="outline" className="text-red-600 border-red-600">
-                        {household.daysOverdue} {t.daysOverdue}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1.5" />
-                      {household.nextAction}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => (window.location.href = `tel:${household.phone}`)}
-                    >
-                      <Clock className="w-4 h-4 mr-1.5" />
-                      {t.callPatient}
-                    </Button>
-                    {onNavigate && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => onNavigate(`route/${household.id}`)}
-                      >
-                        <MapPin className="w-4 h-4 mr-1.5" />
-                        {t.planRoute}
-                      </Button>
-                    )}
+                    <p className="text-sm text-gray-500">
+                      {household.age} {language === 'sw' ? 'miaka' : 'years old'} • {household.status}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+
+                <div className="bg-gray-50 border-l-[4px] border-l-[#6366f1] p-3 rounded mb-3">
+                  <p className="text-sm font-medium text-gray-900">{household.reason}</p>
+                </div>
+
+                <div className="bg-[#eff6ff] border-l-[4px] border-l-[#6366f1] p-3 rounded mb-3">
+                  <div className="flex items-start gap-2">
+                    <Zap className="w-4 h-4 text-[#6366f1] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-[#1e1b4b] uppercase mb-1">{t.aiRecommends}</p>
+                      <p className="text-sm text-[#3730a3]">{household.aiAction}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{t.lastVisit}: {household.lastVisit}</span>
+                  </div>
+                  {household.daysOverdue > 0 && (
+                    <StatusBadge variant="warning" label={`${household.daysOverdue} ${t.daysOverdue}`} />
+                  )}
+                </div>
+
+                <div className="flex gap-2 min-h-[48px]">
+                  <AnimatedButton
+                    type="button"
+                    aria-label={household.nextAction}
+                    size="sm"
+                    variant="primary"
+                    className="flex-1"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    {household.nextAction}
+                  </AnimatedButton>
+                  <AnimatedButton
+                    type="button"
+                    aria-label={t.callPatient}
+                    size="sm"
+                    variant="ghost"
+                    className="flex-1"
+                    onClick={() => (window.location.href = `tel:${household.phone}`)}
+                  >
+                    <Clock className="w-4 h-4" />
+                    {t.callPatient}
+                  </AnimatedButton>
+                  {onNavigate && (
+                    <AnimatedButton
+                      type="button"
+                      aria-label={t.planRoute}
+                      size="sm"
+                      variant="ghost"
+                      className="flex-1"
+                      onClick={() => onNavigate(`route/${household.id}`)}
+                    >
+                      <MapPin className="w-4 h-4" />
+                      {t.planRoute}
+                    </AnimatedButton>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
 
         {/* Performance */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-green-600" />
-                {t.coverage}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
+          <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-5">
+            <div className="flex items-center gap-2 mb-4 text-[#1e1b4b] font-semibold">
+              <MapPin className="h-5 w-5 text-[#10b981]" />
+              {t.coverage}
+            </div>
+            <div className="space-y-4">
+              {[
+                { label: t.pregnant, value: 85 },
+                { label: `${t.children} <5`, value: 92 },
+                { label: t.ncds, value: 78 },
+              ].map((item) => (
+                <div key={item.label}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>{t.pregnant}</span>
-                    <span>85%</span>
+                    <span className="text-gray-700">{item.label}</span>
+                    <span className="font-semibold text-[#1e1b4b]">{item.value}%</span>
                   </div>
-                  <Progress value={85} className="h-2" />
+                  <Progress value={item.value} className="h-2" />
                 </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{t.children} {'<'}5</span>
-                    <span>92%</span>
-                  </div>
-                  <Progress value={92} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{t.ncds}</span>
-                    <span>78%</span>
-                  </div>
-                  <Progress value={78} className="h-2" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                {t.performance}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <span className="text-sm">{language === 'sw' ? 'Ziara Wiki Hii' : 'Visits This Week'}</span>
-                  <Badge className="bg-green-600">42</Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <span className="text-sm">{language === 'sw' ? 'Marejesho Yaliyofanikiwa' : 'Successful Referrals'}</span>
-                  <Badge className="bg-blue-600">38</Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <span className="text-sm">{language === 'sw' ? 'Data Iliyopokelewa' : 'Data Synced'}</span>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                </div>
+          <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-5">
+            <div className="flex items-center gap-2 mb-4 text-[#1e1b4b] font-semibold">
+              <TrendingUp className="h-5 w-5 text-[#6366f1]" />
+              {t.performance}
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
+                <span className="text-sm text-gray-700">{language === 'sw' ? 'Ziara Wiki Hii' : 'Visits This Week'}</span>
+                <StatusBadge variant="success" label="42" />
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center justify-between p-3 bg-[#eff6ff] rounded-xl">
+                <span className="text-sm text-gray-700">{language === 'sw' ? 'Marejesho Yaliyofanikiwa' : 'Successful Referrals'}</span>
+                <StatusBadge variant="info" label="38" />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
+                <span className="text-sm text-gray-700">{language === 'sw' ? 'Data Iliyopokelewa' : 'Data Synced'}</span>
+                <CheckCircle className="h-5 w-5 text-[#10b981]" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

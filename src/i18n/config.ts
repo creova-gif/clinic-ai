@@ -17,6 +17,10 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import swahiliTranslations from './locales/sw.json';
 import englishTranslations from './locales/en.json';
 
+// Namespace-specific translations
+import chwEn from './locales/en/chw.json';
+import chwSw from './locales/sw/chw.json';
+
 // Development mode: log missing keys
 const missingKeyHandler = (lngs: readonly string[], ns: string, key: string) => {
   if (process.env.NODE_ENV === 'development') {
@@ -31,10 +35,12 @@ i18n
   .init({
     resources: {
       sw: {
-        translation: swahiliTranslations
+        translation: swahiliTranslations,
+        chw: chwSw,
       },
       en: {
-        translation: englishTranslations
+        translation: englishTranslations,
+        chw: chwEn,
       }
     },
     
@@ -43,7 +49,7 @@ i18n
     fallbackLng: 'sw',
     
     // Namespaces
-    ns: ['translation'],
+    ns: ['translation', 'chw'],
     defaultNS: 'translation',
     
     // Debug in development

@@ -1,6 +1,6 @@
 /**
  * EnhancedSymptomChecker - CLINICALLY SAFE VERSION
- * 
+ *
  * SAFETY IMPROVEMENTS:
  * - Uses ClinicalTriageEngine with WHO-based logic
  * - Emergency keyword detection
@@ -9,7 +9,7 @@
  * - Prominent safety disclaimers
  * - Audit logging enabled
  * - Human validation required messaging
- * 
+ *
  * REGULATORY COMPLIANCE:
  * - TMDA SaMD Class A (advisory only, lowest risk)
  * - Tanzania PDPA (audit trail, no PII stored)
@@ -21,22 +21,22 @@ import { useApp } from '../context/AppContext';
 import {
   ChevronLeft,
   AlertTriangle,
-  CheckCircle,
   Clock,
   Phone,
-  ArrowRight,
-  RefreshCw,
   Shield,
   MapPin,
   Info,
   ChevronDown,
 } from 'lucide-react';
-import { Button } from './ui/button';
 import { ClinicalTriageEngine } from './ClinicalTriageEngine';
 import type { TriageResult, SymptomAnswer } from './ClinicalTriageEngine';
 import { api } from '@/app/services/api';
 import { toast } from 'sonner';
 import { MedicalButton, MedicalCard, colors } from '@/app/design-system';
+import { HeroHeader } from '@/app/components/ui/HeroHeader';
+import { AnimatedButton } from '@/app/components/ui/AnimatedButton';
+import { StatusBadge } from '@/app/components/ui/StatusBadge';
+import { StepTransition } from '@/app/components/ui/StepTransition';
 
 const translations = {
   sw: {
@@ -148,6 +148,8 @@ const questions = [
   },
 ];
 
+const totalSteps = questions.length;
+
 interface EnhancedSymptomCheckerProps {
   onBack: () => void;
 }
@@ -167,6 +169,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
       try {
         sessionStorage.setItem('symptom_checker_autosave', JSON.stringify(answers));
       } catch (e) {
+        // ignore
       }
     }
   }, [answers]);
@@ -181,15 +184,16 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
         setCurrentQuestion(savedAnswers.length);
       }
     } catch (e) {
+      // ignore
     }
   }, []);
 
-  // NEW: Save assessment to database
+  // Save assessment to database (preserved exactly)
   const saveAssessment = async (assessment: TriageResult, answers: SymptomAnswer[]) => {
     setIsSaving(true);
     try {
       const response = await api.symptomAssessments.create({
-        user_id: undefined, // Anonymous users can use symptom checker
+        user_id: undefined,
         session_id: assessment.auditId,
         symptoms: answers,
         triage_result: assessment,
@@ -197,10 +201,10 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
       });
 
       if (response.success) {
-      } else {
-        // Don't show error to user - this is background logging
+        // success
       }
     } catch (error) {
+      // background logging - don't surface to user
     } finally {
       setIsSaving(false);
     }
@@ -220,23 +224,18 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
     if (currentQuestion < questions.length - 1) {
       setTimeout(() => setCurrentQuestion(currentQuestion + 1), 200);
     } else {
-      // All questions answered - perform triage
       const result = ClinicalTriageEngine.assessSymptoms(updatedAnswers, language);
-      
-      // Log for audit trail (PDPA compliance)
-      ClinicalTriageEngine.logAssessment(
-        result.auditId,
-        updatedAnswers,
-        result
-      );
 
-      // NEW: Save to database
+      ClinicalTriageEngine.logAssessment(result.auditId, updatedAnswers, result);
       saveAssessment(result, updatedAnswers);
-
       setTriageResult(result);
       setShowResults(true);
 
-      // Clear autosave after successful assessment
+      // Haptic feedback for high-risk
+      if (result.level === 'emergency' || result.level === 'urgent') {
+        navigator.vibrate?.([200, 100, 200]);
+      }
+
       sessionStorage.removeItem('symptom_checker_autosave');
     }
   };
@@ -245,13 +244,9 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      // Perform triage with partial data
       const result = ClinicalTriageEngine.assessSymptoms(answers, language);
       ClinicalTriageEngine.logAssessment(result.auditId, answers, result);
-      
-      // NEW: Save to database
       saveAssessment(result, answers);
-      
       setTriageResult(result);
       setShowResults(true);
       sessionStorage.removeItem('symptom_checker_autosave');
@@ -261,80 +256,68 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'emergency':
-        return {
-          bg: colors.danger[50],
-          border: colors.danger[500],
-          text: colors.danger[700],
-        };
+        return { bg: colors.danger[50], border: colors.danger[500], text: colors.danger[700] };
       case 'urgent':
-        return {
-          bg: colors.warning[50],
-          border: colors.warning[500],
-          text: colors.warning[700],
-        };
+        return { bg: colors.warning[50], border: colors.warning[500], text: colors.warning[700] };
       case 'moderate':
-        return {
-          bg: colors.primary[50],
-          border: colors.primary[500],
-          text: colors.primary[700],
-        };
+        return { bg: colors.primary[50], border: colors.primary[500], text: colors.primary[700] };
       default:
-        return {
-          bg: colors.success[50],
-          border: colors.success[500],
-          text: colors.success[700],
-        };
+        return { bg: colors.success[50], border: colors.success[500], text: colors.success[700] };
     }
   };
 
+  // ── Results screen ──────────────────────────────────────────────────────────
   if (showResults && triageResult) {
     const levelColors = getLevelColor(triageResult.level);
     const levelLabel = t[triageResult.level as keyof typeof t] || triageResult.level;
 
-    // Extract key symptoms for display
     const symptoms = answers
       .filter((answer) => answer.answer === true)
-      .map((answer) => questions.find((q) => q.id === answer.questionId)?.[language] || '');
+      .map((answer) => questions.find((q) => q.id === answer.questionId)?.[language as 'sw' | 'en'] || '');
+
+    // StatusBadge variant for risk level
+    const riskBadgeVariant =
+      triageResult.level === 'emergency' || triageResult.level === 'urgent'
+        ? 'danger'
+        : triageResult.level === 'moderate'
+        ? 'warning'
+        : 'success';
+
+    const riskBadgeLabel =
+      triageResult.level === 'emergency' || triageResult.level === 'urgent'
+        ? 'Haraka!'
+        : triageResult.level === 'moderate'
+        ? 'Angalia'
+        : 'Kawaida';
 
     return (
-      <div className="min-h-screen bg-[#F7F9FB] pb-24">
-        {/* Header */}
-        <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-6 py-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={onBack}
-                className="w-10 h-10 rounded-lg flex items-center justify-center active:scale-95 transition-transform"
-                style={{ backgroundColor: colors.neutral[100] }}
-              >
-                <ChevronLeft className="w-5 h-5" style={{ color: colors.neutral[700] }} />
-              </button>
-              <h1 className="text-lg font-semibold text-[#1A1D23]">{t.results}</h1>
-            </div>
-          </div>
-        </header>
+      <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+        <HeroHeader greeting="Angalia Dalili" subtitle="Matokeo ya Tathmini">
+          <button
+            type="button"
+            aria-label={language === 'sw' ? 'Rudi' : 'Back'}
+            onClick={onBack}
+            className="absolute top-4 left-4 flex items-center gap-1 text-white/80 hover:text-white transition-colors text-sm font-medium"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {language === 'sw' ? 'Rudi' : 'Back'}
+          </button>
+        </HeroHeader>
 
-        <div className="max-w-4xl mx-auto px-6 pt-6 pb-24 space-y-6">
-          {/* ===================================
-              CRITICAL ALERTS SECTION
-              =================================== */}
-
-          {/* Emergency Call Button (if needed) - HIGHEST PRIORITY */}
+        <div className="max-w-4xl mx-auto px-4 pt-6 pb-24 space-y-6">
+          {/* Emergency Call Button */}
           {triageResult.callEmergency && (
             <div
               className="relative overflow-hidden p-6 rounded-2xl border-2"
-              style={{
-                backgroundColor: colors.danger[50],
-                borderColor: colors.danger[500],
-              }}
+              style={{ backgroundColor: colors.danger[50], borderColor: colors.danger[500] }}
             >
-              {/* Animated pulse background */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
-              
               <div className="relative z-10">
                 <div className="flex items-start gap-4 mb-5">
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center animate-pulse" 
-                       style={{ backgroundColor: colors.danger[500] }}>
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center animate-pulse"
+                    style={{ backgroundColor: colors.danger[500] }}
+                  >
                     <AlertTriangle className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex-1">
@@ -346,20 +329,22 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                     </p>
                   </div>
                 </div>
-                <MedicalButton
+                <AnimatedButton
+                  type="button"
                   variant="danger"
                   size="lg"
-                  onClick={() => (window.location.href = 'tel:114')}
                   fullWidth
+                  aria-label={t.callEmergency}
+                  onClick={() => (window.location.href = 'tel:114')}
                 >
                   <Phone className="w-5 h-5" />
                   {t.callEmergency}
-                </MedicalButton>
+                </AnimatedButton>
               </div>
             </div>
           )}
 
-          {/* Safety Notice - ALWAYS VISIBLE */}
+          {/* Safety Notice */}
           <div
             className="p-5 rounded-2xl border-l-4 shadow-sm"
             style={{
@@ -371,8 +356,10 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
             }}
           >
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" 
-                   style={{ backgroundColor: colors.warning[100] }}>
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: colors.warning[100] }}
+              >
                 <Shield className="w-5 h-5" style={{ color: colors.warning[700] }} />
               </div>
               <div className="flex-1">
@@ -384,10 +371,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
             </div>
           </div>
 
-          {/* ===================================
-              ASSESSMENT RESULTS CARD
-              =================================== */}
-
+          {/* Assessment Results Card */}
           <MedicalCard
             className="overflow-hidden"
             style={{
@@ -396,15 +380,16 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
               borderWidth: '2px',
             }}
           >
-            {/* Risk Level Header */}
-            <div className="flex items-center justify-between mb-6 pb-5 border-b-2" style={{ borderColor: levelColors.border }}>
+            <div
+              className="flex items-center justify-between mb-6 pb-5 border-b-2"
+              style={{ borderColor: levelColors.border }}
+            >
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-                     style={{ backgroundColor: levelColors.text }}>
-                  {triageResult.level === 'emergency' && (
-                    <AlertTriangle className="w-8 h-8 text-white" />
-                  )}
-                  {triageResult.level === 'urgent' && (
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+                  style={{ backgroundColor: levelColors.text }}
+                >
+                  {(triageResult.level === 'emergency' || triageResult.level === 'urgent') && (
                     <AlertTriangle className="w-8 h-8 text-white" />
                   )}
                   {(triageResult.level === 'routine' || triageResult.level === 'self-care') && (
@@ -412,7 +397,10 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                   )}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: levelColors.text }}>
+                  <p
+                    className="text-xs font-semibold uppercase tracking-wider mb-1"
+                    style={{ color: levelColors.text }}
+                  >
                     {t.riskLevel}
                   </p>
                   <h2 className="text-3xl font-bold tracking-tight" style={{ color: levelColors.text }}>
@@ -420,9 +408,10 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                   </h2>
                 </div>
               </div>
+              {/* StatusBadge for risk level */}
+              <StatusBadge variant={riskBadgeVariant} label={riskBadgeLabel} />
             </div>
 
-            {/* Primary Recommendation */}
             <div className="space-y-4">
               <div>
                 <h3 className="font-bold text-[#1A1D23] mb-3 text-lg flex items-center gap-2">
@@ -434,7 +423,6 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                 </p>
               </div>
 
-              {/* Key Symptoms Badge */}
               {symptoms.length > 0 && (
                 <div className="pt-4 mt-4 border-t border-[#E5E7EB]">
                   <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
@@ -445,10 +433,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                       <span
                         key={idx}
                         className="px-3 py-1 rounded-full text-xs font-medium"
-                        style={{
-                          backgroundColor: colors.primary[50],
-                          color: colors.primary[700],
-                        }}
+                        style={{ backgroundColor: colors.primary[50], color: colors.primary[700] }}
                       >
                         {symptom}
                       </span>
@@ -456,10 +441,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                     {symptoms.length > 3 && (
                       <span
                         className="px-3 py-1 rounded-full text-xs font-medium"
-                        style={{
-                          backgroundColor: colors.neutral[100],
-                          color: colors.neutral[700],
-                        }}
+                        style={{ backgroundColor: colors.neutral[100], color: colors.neutral[700] }}
                       >
                         +{symptoms.length - 3} {language === 'sw' ? 'zaidi' : 'more'}
                       </span>
@@ -470,25 +452,18 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
             </div>
           </MedicalCard>
 
-          {/* ===================================
-              NEAREST FACILITY (ACTION CARD)
-              =================================== */}
-
+          {/* Nearest Facility */}
           {triageResult.nearestFacility && (
             <MedicalCard className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-2 border-[#E5E7EB] hover:border-[#1E88E5]">
-              {/* Background decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 opacity-5 transform translate-x-8 -translate-y-8">
                 <MapPin className="w-full h-full" style={{ color: colors.primary[500] }} />
               </div>
-              
               <div className="relative z-10">
-                {/* Header with badge */}
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="px-3 py-1 rounded-full text-xs font-semibold" 
-                       style={{ 
-                         backgroundColor: colors.primary[50],
-                         color: colors.primary[700]
-                       }}>
+                  <div
+                    className="px-3 py-1 rounded-full text-xs font-semibold"
+                    style={{ backgroundColor: colors.primary[50], color: colors.primary[700] }}
+                  >
                     {language === 'sw' ? 'Karibu Nawe' : 'Nearby'}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-[#6B7280]">
@@ -496,20 +471,16 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                     <span>{language === 'sw' ? '24/7' : 'Open 24/7'}</span>
                   </div>
                 </div>
-
-                {/* Main content */}
                 <div className="flex items-start gap-4">
                   <div
                     className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300"
-                    style={{ 
+                    style={{
                       background: `linear-gradient(135deg, ${colors.primary[500]} 0%, ${colors.primary[600]} 100%)`,
                     }}
                   >
                     <MapPin className="w-8 h-8 text-white" />
                   </div>
-                  
                   <div className="flex-1 min-w-0">
-                    {/* Facility Name & Badge */}
                     <div className="mb-3">
                       <h3 className="font-bold text-[#1A1D23] mb-2 text-xl leading-tight">
                         {t.nearestFacility}
@@ -517,15 +488,10 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                       <p className="text-lg text-[#1A1D23] leading-relaxed font-semibold mb-2">
                         {triageResult.nearestFacility}
                       </p>
-                      
-                      {/* Facility Type Badge */}
                       <div className="flex items-center gap-2">
-                        <span 
+                        <span
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold"
-                          style={{
-                            backgroundColor: colors.success[50],
-                            color: colors.success[700],
-                          }}
+                          style={{ backgroundColor: colors.success[50], color: colors.success[700] }}
                         >
                           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                           {language === 'sw' ? 'Wazi Sasa' : 'Open Now'}
@@ -535,15 +501,10 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                         </span>
                       </div>
                     </div>
-                    
-                    {/* Distance & Time Cards */}
                     <div className="grid grid-cols-2 gap-2 mb-4">
-                      <div 
+                      <div
                         className="px-3 py-2.5 rounded-xl border"
-                        style={{
-                          backgroundColor: colors.primary[50],
-                          borderColor: colors.primary[100],
-                        }}
+                        style={{ backgroundColor: colors.primary[50], borderColor: colors.primary[100] }}
                       >
                         <div className="flex items-center gap-1.5 mb-1">
                           <MapPin className="w-3.5 h-3.5" style={{ color: colors.primary[600] }} />
@@ -553,13 +514,9 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                         </div>
                         <p className="text-base font-bold text-[#1A1D23]">2.5 km</p>
                       </div>
-                      
-                      <div 
+                      <div
                         className="px-3 py-2.5 rounded-xl border"
-                        style={{
-                          backgroundColor: colors.primary[50],
-                          borderColor: colors.primary[100],
-                        }}
+                        style={{ backgroundColor: colors.primary[50], borderColor: colors.primary[100] }}
                       >
                         <div className="flex items-center gap-1.5 mb-1">
                           <Clock className="w-3.5 h-3.5" style={{ color: colors.primary[600] }} />
@@ -570,44 +527,31 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                         <p className="text-base font-bold text-[#1A1D23]">~8 min</p>
                       </div>
                     </div>
-
-                    {/* Quick Info */}
                     <div className="mb-4 p-3 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB]">
                       <div className="flex items-start gap-2">
                         <Info className="w-4 h-4 text-[#6B7280] mt-0.5 flex-shrink-0" />
                         <p className="text-xs text-[#6B7280] leading-relaxed">
-                          {language === 'sw' 
+                          {language === 'sw'
                             ? 'Kituo hiki kinakubali NHIF na kina daktari wa dharura 24/7'
                             : 'This facility accepts NHIF and has emergency doctors available 24/7'}
                         </p>
                       </div>
                     </div>
-
-                    {/* Action Buttons */}
                     <div className="space-y-2">
-                      <MedicalButton 
-                        variant="primary" 
-                        size="lg" 
+                      <MedicalButton
+                        variant="primary"
+                        size="lg"
                         className="w-full group-hover:shadow-lg transition-all"
                       >
                         <MapPin className="w-5 h-5" />
                         {language === 'sw' ? 'Pata Maelekezo' : 'Get Directions'}
                       </MedicalButton>
-                      
                       <div className="grid grid-cols-2 gap-2">
-                        <MedicalButton 
-                          variant="outline" 
-                          size="md"
-                          className="flex-1"
-                        >
+                        <MedicalButton variant="outline" size="md" className="flex-1">
                           <Phone className="w-4 h-4" />
                           {language === 'sw' ? 'Piga Simu' : 'Call'}
                         </MedicalButton>
-                        <MedicalButton 
-                          variant="outline" 
-                          size="md"
-                          className="flex-1"
-                        >
+                        <MedicalButton variant="outline" size="md" className="flex-1">
                           <Info className="w-4 h-4" />
                           {language === 'sw' ? 'Maelezo' : 'Details'}
                         </MedicalButton>
@@ -619,17 +563,13 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
             </MedicalCard>
           )}
 
-          {/* ===================================
-              DETAILED REASONING (EXPANDABLE)
-              =================================== */}
-
+          {/* Reasoning */}
           {triageResult.reasoning.length > 0 && (
             <MedicalCard className="border-2 border-[#E5E7EB]">
               <details className="group">
                 <summary className="flex items-center gap-3 cursor-pointer list-none hover:opacity-75 transition-opacity">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center group-hover:bg-[#EFF6FF] transition-colors"
-                       style={{ backgroundColor: colors.primary[50] }}>
-                    <Info className="w-5 h-5" style={{ color: colors.primary[500] }} />
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#eef2ff] group-hover:bg-[#EFF6FF] transition-colors">
+                    <Info className="w-5 h-5 text-[#6366f1]" />
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-[#1A1D23] mb-0.5">
@@ -642,15 +582,15 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                   <ChevronDown className="w-5 h-5 text-[#6B7280] transition-transform group-open:rotate-180" />
                 </summary>
                 <div className="mt-5 pt-5 border-t border-[#E5E7EB] space-y-5">
-                  {/* Reasoning Points */}
                   <div>
-                    <h4 className="font-bold text-[#1A1D23] mb-3 text-sm uppercase tracking-wide">{t.reasoning}</h4>
+                    <h4 className="font-bold text-[#1A1D23] mb-3 text-sm uppercase tracking-wide">
+                      {t.reasoning}
+                    </h4>
                     <ul className="space-y-3">
                       {triageResult.reasoning.map((reason, idx) => (
                         <li key={idx} className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                               style={{ backgroundColor: colors.primary[100] }}>
-                            <span className="text-xs font-bold" style={{ color: colors.primary[700] }}>
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-[#c7d2fe]">
+                            <span className="text-xs font-bold text-[#3730a3]">
                               {idx + 1}
                             </span>
                           </div>
@@ -659,8 +599,6 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                       ))}
                     </ul>
                   </div>
-
-                  {/* Audit Trail */}
                   <div className="pt-4 border-t border-[#E5E7EB] bg-[#F9FAFB] -mx-6 -mb-6 px-6 py-4 rounded-b-xl">
                     <div className="flex items-start gap-2">
                       <Shield className="w-4 h-4 text-[#6B7280] mt-0.5 flex-shrink-0" />
@@ -682,10 +620,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
             </MedicalCard>
           )}
 
-          {/* ===================================
-              DISCLAIMERS (COMPACT)
-              =================================== */}
-
+          {/* Disclaimers */}
           {triageResult.disclaimers.length > 0 && (
             <div className="p-4 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]">
               <details className="group">
@@ -708,35 +643,32 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
             </div>
           )}
 
-          {/* ===================================
-              ACTION BUTTON
-              =================================== */}
-
+          {/* Back button */}
           <div className="pt-2">
-            <MedicalButton 
-              variant="secondary" 
-              size="lg" 
-              onClick={onBack} 
+            <AnimatedButton
+              type="button"
+              variant="secondary"
+              size="lg"
               fullWidth
-              className="shadow-sm hover:shadow-md transition-shadow"
+              aria-label={t.backHome}
+              onClick={onBack}
             >
               <ChevronLeft className="w-5 h-5" />
               {t.backHome}
-            </MedicalButton>
+            </AnimatedButton>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
-  // Question Screen
+  // ── Question screen ─────────────────────────────────────────────────────────
   const currentQ = questions[currentQuestion];
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const currentStep = currentQuestion + 1;
 
-  // Safety check - if no current question, go to results
+  // Safety check - if no current question, trigger results
   if (!currentQ) {
     if (!showResults && answers.length > 0) {
-      // Trigger assessment with existing answers
       const result = ClinicalTriageEngine.assessSymptoms(answers, language);
       ClinicalTriageEngine.logAssessment(result.auditId, answers, result);
       setTriageResult(result);
@@ -747,92 +679,108 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F9FB] pb-24">
-      {/* Header */}
-      <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4 mb-3">
-            <button
-              onClick={onBack}
-              className="w-10 h-10 rounded-lg flex items-center justify-center active:scale-95 transition-transform"
-              style={{ backgroundColor: colors.neutral[100] }}
-            >
-              <ChevronLeft className="w-5 h-5" style={{ color: colors.neutral[700] }} />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-lg font-semibold text-[#1A1D23]">{t.title}</h1>
-              <p className="text-sm text-[#6B7280]">{t.subtitle}</p>
-            </div>
-          </div>
-          {/* Progress Bar */}
-          <div className="w-full h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+    <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+      <HeroHeader greeting="Angalia Dalili" subtitle="Hatua kwa hatua">
+        <button
+          type="button"
+          aria-label={language === 'sw' ? 'Rudi' : 'Back'}
+          onClick={onBack}
+          className="absolute top-4 left-4 flex items-center gap-1 text-white/80 hover:text-white transition-colors text-sm font-medium"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          {language === 'sw' ? 'Rudi' : 'Back'}
+        </button>
+      </HeroHeader>
+
+      {/* Step progress bar */}
+      <div
+        className="px-4 pt-3"
+        aria-label={`Hatua ${currentStep} kati ya ${totalSteps}`}
+        role="progressbar"
+        aria-valuenow={String(currentStep)}
+        aria-valuemin={String(1)}
+        aria-valuemax={String(totalSteps)}
+      >
+        <div className="flex gap-1.5">
+          {Array.from({ length: totalSteps }, (_, i) => (
             <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${progress}%`,
-                backgroundColor: colors.primary[500],
-              }}
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                i < currentStep ? 'bg-[#6366f1]' : 'bg-gray-200'
+              }`}
             />
-          </div>
-          <p className="text-xs text-[#9CA3AF] mt-2">
-            {t.progress.replace('{{current}}', String(currentQuestion + 1)).replace('{{total}}', String(questions.length))}
-          </p>
+          ))}
         </div>
-      </header>
+        <p className="text-xs text-gray-400 mt-1.5">
+          {t.progress
+            .replace('{{current}}', String(currentStep))
+            .replace('{{total}}', String(totalSteps))}
+        </p>
+      </div>
 
-      <div className="max-w-4xl mx-auto px-6 pt-8">
-        {/* Question Card */}
-        <MedicalCard>
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-4">{currentQ.icon}</div>
-            <h2 className="text-xl font-semibold text-[#1A1D23] mb-2">
-              {currentQ[language as keyof typeof currentQ] as string}
-            </h2>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 pt-6">
+        {/* Step content with transition */}
+        <StepTransition stepKey={currentQuestion}>
+          <MedicalCard>
+            <div className="text-center mb-8">
+              <div className="text-6xl mb-4">{currentQ.icon}</div>
+              <h2 className="text-xl font-semibold text-[#1A1D23] mb-2">
+                {currentQ[language as keyof typeof currentQ] as string}
+              </h2>
+            </div>
 
-          {/* Answer Buttons */}
-          {currentQ.type === 'options' ? (
-            <div className="space-y-3">
-              {currentQ.options?.map((option) => (
-                <MedicalButton
-                  key={option.value}
+            {/* Answer buttons */}
+            {currentQ.type === 'options' ? (
+              <div className="space-y-3">
+                {currentQ.options?.map((option) => (
+                  <AnimatedButton
+                    key={option.value}
+                    type="button"
+                    variant="secondary"
+                    size="lg"
+                    fullWidth
+                    aria-label={option.label[language as 'sw' | 'en']}
+                    onClick={() => handleAnswer(option.value)}
+                  >
+                    {option.label[language as 'sw' | 'en']}
+                  </AnimatedButton>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <AnimatedButton
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  aria-label={t.yes}
+                  onClick={() => handleAnswer(true)}
+                >
+                  {t.yes}
+                </AnimatedButton>
+                <AnimatedButton
+                  type="button"
                   variant="secondary"
                   size="lg"
-                  onClick={() => handleAnswer(option.value)}
-                  fullWidth
+                  aria-label={t.no}
+                  onClick={() => handleAnswer(false)}
                 >
-                  {option.label[language]}
-                </MedicalButton>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              <MedicalButton
-                variant="primary"
-                size="lg"
-                onClick={() => handleAnswer(true)}
-              >
-                {t.yes}
-              </MedicalButton>
-              <MedicalButton
-                variant="secondary"
-                size="lg"
-                onClick={() => handleAnswer(false)}
-              >
-                {t.no}
-              </MedicalButton>
-            </div>
-          )}
+                  {t.no}
+                </AnimatedButton>
+              </div>
+            )}
 
-          <div className="mt-4 text-center">
-            <button
-              onClick={handleSkip}
-              className="text-sm text-[#6B7280] hover:text-[#374151]"
-            >
-              {t.skip}
-            </button>
-          </div>
-        </MedicalCard>
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={handleSkip}
+                aria-label={t.skip}
+                className="text-sm text-[#6B7280] hover:text-[#374151] min-h-[48px] px-4"
+              >
+                {t.skip}
+              </button>
+            </div>
+          </MedicalCard>
+        </StepTransition>
 
         {/* Safety Footer */}
         <div className="mt-6 p-4 rounded-xl" style={{ backgroundColor: colors.warning[50] }}>
@@ -841,6 +789,6 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
