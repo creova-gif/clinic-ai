@@ -46,18 +46,22 @@ const TelemedicineInterface = lazy(() => import('./components/TelemedicineInterf
 const TestResultsViewer = lazy(() => import('./components/TestResultsViewer').then(m => ({ default: m.TestResultsViewer })));
 const EmergencyScreen = lazy(() => import('./components/EmergencyScreen').then(m => ({ default: m.EmergencyScreen })));
 const ClinicalDashboard = lazy(() => import('./components/ClinicalDashboard').then(m => ({ default: m.ClinicalDashboard })));
+const AIHealthChat = lazy(() => import('./components/AIHealthChat').then(m => ({ default: m.AIHealthChat })));
 
 // Loading components - Premium skeleton states
 import { SkeletonDashboardGrid, Spinner } from './components/ui/skeleton';
 
-// Loading spinner component - Now with skeleton variants
+// Loading spinner component — CREOVA Medical branded
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen bg-[#F7F9FB] flex items-center justify-center">
-      <div className="text-center">
-        <Spinner size="lg" className="mx-auto mb-4" />
-        <p className="text-sm text-[#6B7280]">Loading...</p>
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center gap-4">
+      <div
+        className="w-12 h-12 rounded-2xl flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}
+      >
+        <Spinner size="sm" className="text-white" />
       </div>
+      <p className="text-sm text-gray-400 font-medium">CREOVA Medical</p>
     </div>
   );
 }
@@ -340,6 +344,12 @@ function AppContent() {
           {currentRoute === 'emergency' && (
             <EmergencyScreen
               language={language as 'sw' | 'en'}
+            />
+          )}
+          {currentRoute === 'ai-chat' && (
+            <AIHealthChat
+              onBack={() => setCurrentRoute('dashboard')}
+              onNavigate={setCurrentRoute}
             />
           )}
           {(currentRoute === 'telemedicine' || currentRoute === 'talk-to-doctor') && (

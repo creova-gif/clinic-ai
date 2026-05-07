@@ -1,22 +1,16 @@
 /**
- * TelemedicineInterface - Talk to Doctor / CHW
- * 
- * ELITE STANDARD: Secure teleconsultation interface
- * Text-based consultation with escalation to voice/video (future)
+ * TelemedicineInterface — CREOVA Medical Premium Telemedicine
+ * Video/audio/text consultations with Tanzania doctors
+ * Inspired by Babylon Health + Abridge design language
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  ChevronLeft,
-  MessageCircle,
-  Phone,
-  Video,
-  Send,
-  Clock,
-  User,
-  Stethoscope,
+  ArrowLeft, Video, Phone, MessageCircle, Star, Clock, Send,
+  Mic, MicOff, VideoOff, PhoneOff, X, ChevronRight, Wifi,
+  Shield, CheckCircle2, Sparkles,
 } from 'lucide-react';
-import { MedicalButton, MedicalCard, colors } from '@/app/design-system';
 
 interface TelemedicineInterfaceProps {
   language: 'sw' | 'en';
@@ -26,228 +20,261 @@ interface TelemedicineInterfaceProps {
 interface Provider {
   id: string;
   name: string;
-  role: string;
-  specialty: string;
+  specialty: { sw: string; en: string };
+  hospital: string;
   available: boolean;
-  responseTime: string;
+  waitMin: number;
   rating: number;
   consultations: number;
+  initials: string;
+  color: string;
+  verifiedBy: string;
 }
 
-interface Message {
+interface ChatMsg {
   id: string;
   sender: 'user' | 'provider';
   text: string;
   time: string;
 }
 
+type View = 'list' | 'chat' | 'call';
+
+const PROVIDERS: Provider[] = [
+  {
+    id: 'dr1', name: 'Dr. Fatuma Rashid', specialty: { sw: 'Daktari wa Jumla', en: 'General Physician' },
+    hospital: 'Muhimbili National Hospital', available: true, waitMin: 5, rating: 4.9,
+    consultations: 1240, initials: 'FR', color: '#0d9488', verifiedBy: 'CSEE Tanzania',
+  },
+  {
+    id: 'dr2', name: 'Dr. Emmanuel Mwangi', specialty: { sw: 'Mtaalamu wa Moyo', en: 'Cardiologist' },
+    hospital: 'Aga Khan Hospital Dar es Salaam', available: true, waitMin: 12, rating: 4.8,
+    consultations: 890, initials: 'EM', color: '#0f172a', verifiedBy: 'CSEE Tanzania',
+  },
+  {
+    id: 'dr3', name: 'Dr. Amina Juma', specialty: { sw: 'Daktari wa Watoto', en: 'Paediatrician' },
+    hospital: 'Mwananyamala Regional Hospital', available: true, waitMin: 8, rating: 4.7,
+    consultations: 2100, initials: 'AJ', color: '#7c3aed', verifiedBy: 'CSEE Tanzania',
+  },
+  {
+    id: 'dr4', name: 'Dr. Patrick Kimaro', specialty: { sw: 'Mshauri wa Uzazi', en: 'Obstetrician' },
+    hospital: 'Amana District Hospital', available: false, waitMin: 25, rating: 4.6,
+    consultations: 650, initials: 'PK', color: '#d97706', verifiedBy: 'CSEE Tanzania',
+  },
+];
+
+const tr = {
+  sw: {
+    title: 'Zungumza na Daktari',
+    subtitle: 'Mashauriano salama ya kidijitali',
+    available: 'Anapatikana',
+    busy: 'Ana shughuli',
+    wait: 'muda wa kusubiri',
+    mins: 'dak',
+    consultations: 'mashauriano',
+    startChat: 'Anza Mazungumzo',
+    videoCall: 'Simu ya Video',
+    voiceCall: 'Simu ya Sauti',
+    typeMsg: 'Andika ujumbe...',
+    send: 'Tuma',
+    endCall: 'Maliza Simu',
+    connecting: 'Inaunganisha...',
+    secure: 'Salama na ya Siri',
+    tmda: 'Imeidhinishwa na TMDA',
+    moh: 'Imesajiliwa MoH',
+  },
+  en: {
+    title: 'Talk to a Doctor',
+    subtitle: 'Secure digital consultations',
+    available: 'Available',
+    busy: 'Busy',
+    wait: 'wait time',
+    mins: 'min',
+    consultations: 'consultations',
+    startChat: 'Start Chat',
+    videoCall: 'Video Call',
+    voiceCall: 'Voice Call',
+    typeMsg: 'Type a message...',
+    send: 'Send',
+    endCall: 'End Call',
+    connecting: 'Connecting...',
+    secure: 'Secure & Private',
+    tmda: 'TMDA Approved',
+    moh: 'MoH Registered',
+  },
+};
+
+function nowTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 export function TelemedicineInterface({ language, onBack }: TelemedicineInterfaceProps) {
+  const t = tr[language];
+  const [view, setView] = useState<View>('list');
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [callState, setCallState] = useState<'connecting' | 'active'>('connecting');
+  const [micOn, setMicOn] = useState(true);
+  const [videoOn, setVideoOn] = useState(true);
+  const [callSeconds, setCallSeconds] = useState(0);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const t = {
-    sw: {
-      title: 'Zungumza na Daktari',
-      availableProviders: 'Wataalamu Wanapatikana',
-      available: 'Anapatikana',
-      offline: 'Hayupo',
-      responseTime: 'Muda wa Kujibu',
-      consultations: 'Mashauriano',
-      startChat: 'Anza Mazungumzo',
-      callNow: 'Piga Simu',
-      videoCall: 'Mazungumzo ya Video',
-      typeMessage: 'Andika ujumbe...',
-      send: 'Tuma',
-      doctor: 'Daktari',
-      nurse: 'Muuguzi',
-      chw: 'CHW',
-      specialist: 'Mtaalamu',
-      generalPractitioner: 'Daktari wa Jumla',
-      noProviders: 'Hakuna Wataalamu',
-      noProvidersMessage: 'Wataalamu wote wako nje ya mtandao. Jaribu tena baadae.',
-      disclaimer: 'Onyo: Hii ni ushauri wa msingi tu. Kwa dharura, piga 114.',
-      min: 'dak',
-    },
-    en: {
-      title: 'Talk to Doctor',
-      availableProviders: 'Available Providers',
-      available: 'Available',
-      offline: 'Offline',
-      responseTime: 'Response Time',
-      consultations: 'Consultations',
-      startChat: 'Start Chat',
-      callNow: 'Call Now',
-      videoCall: 'Video Call',
-      typeMessage: 'Type a message...',
-      send: 'Send',
-      doctor: 'Doctor',
-      nurse: 'Nurse',
-      chw: 'CHW',
-      specialist: 'Specialist',
-      generalPractitioner: 'General Practitioner',
-      noProviders: 'No Providers',
-      noProvidersMessage: 'All providers are offline. Please try again later.',
-      disclaimer: 'Disclaimer: This is basic guidance only. For emergencies, call 114.',
-      min: 'min',
-    },
-  }[language];
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-  // Mock provider data (would come from API in production)
-  const providers: Provider[] = [
-    {
-      id: '1',
-      name: 'Dr. Amina Mwamba',
-      role: language === 'sw' ? 'Daktari wa Jumla' : 'General Practitioner',
-      specialty: language === 'sw' ? 'Huduma ya Kwanza' : 'Primary Care',
-      available: true,
-      responseTime: '5 ' + t.min,
-      rating: 4.8,
-      consultations: 342,
-    },
-    {
-      id: '2',
-      name: 'Nurse John Kilonzo',
-      role: language === 'sw' ? 'Muuguzi Mkuu' : 'Senior Nurse',
-      specialty: language === 'sw' ? 'Uzazi na Watoto' : 'Maternity & Pediatrics',
-      available: true,
-      responseTime: '3 ' + t.min,
-      rating: 4.9,
-      consultations: 567,
-    },
-    {
-      id: '3',
-      name: 'CHW Grace Mpemba',
-      role: language === 'sw' ? 'CHW' : 'Community Health Worker',
-      specialty: language === 'sw' ? 'Afya ya Jamii' : 'Community Health',
-      available: false,
-      responseTime: '10 ' + t.min,
-      rating: 4.7,
-      consultations: 189,
-    },
-  ];
+  useEffect(() => {
+    if (view === 'call' && callState === 'connecting') {
+      const t = setTimeout(() => setCallState('active'), 2500);
+      return () => clearTimeout(t);
+    }
+  }, [view, callState]);
 
-  const availableProviders = providers.filter(p => p.available);
+  useEffect(() => {
+    if (view === 'call' && callState === 'active') {
+      const interval = setInterval(() => setCallSeconds((s) => s + 1), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [view, callState]);
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim() || !selectedProvider) return;
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      sender: 'user',
-      text: inputValue,
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages([...messages, newMessage]);
-    setInputValue('');
-
-    // Simulate provider response
-    setTimeout(() => {
-      const providerResponse: Message = {
-        id: (Date.now() + 1).toString(),
+  function startChat(provider: Provider) {
+    setSelectedProvider(provider);
+    setMessages([
+      {
+        id: '0',
         sender: 'provider',
         text: language === 'sw'
-          ? 'Asante kwa ujumbe wako. Ninakusaidia sasa...'
-          : 'Thank you for your message. I\'m helping you now...',
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          ? `Habari! Mimi ni ${provider.name}. Ninaweza kukusaidiaje leo?`
+          : `Hello! I'm ${provider.name}. How can I help you today?`,
+        time: nowTime(),
+      },
+    ]);
+    setView('chat');
+  }
+
+  function sendMessage() {
+    if (!inputValue.trim()) return;
+    const msg: ChatMsg = { id: String(Date.now()), sender: 'user', text: inputValue.trim(), time: nowTime() };
+    setMessages((prev) => [...prev, msg]);
+    setInputValue('');
+    setTimeout(() => {
+      const reply: ChatMsg = {
+        id: String(Date.now() + 1),
+        sender: 'provider',
+        text: language === 'sw'
+          ? 'Asante kwa maelezo. Ninaelewa hali yako vizuri sasa. Napendekeza upime shinikizo la damu leo na kurudi kwa uchunguzi zaidi ikiwa dalili zitaendelea.'
+          : 'Thank you for sharing. I understand your condition better now. I recommend checking your blood pressure today and following up if symptoms persist.',
+        time: nowTime(),
       };
-      setMessages(prev => [...prev, providerResponse]);
-    }, 2000);
-  };
+      setMessages((prev) => [...prev, reply]);
+    }, 1800);
+  }
 
-  if (selectedProvider && messages.length > 0) {
-    // Chat View
+  function formatCallTime(s: number) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const ss = (s % 60).toString().padStart(2, '0');
+    return `${m}:${ss}`;
+  }
+
+  /* ── Video Call View ── */
+  if (view === 'call' && selectedProvider) {
     return (
-      <div className="min-h-screen bg-[#F7F9FB] flex flex-col">
-        {/* Header */}
-        <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-6 py-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => {
-                  setSelectedProvider(null);
-                  setMessages([]);
-                }}
-                className="w-10 h-10 rounded-lg flex items-center justify-center active:scale-95 transition-transform"
-                style={{ backgroundColor: colors.neutral[100] }}
-              >
-                <ChevronLeft className="w-5 h-5" style={{ color: colors.neutral[700] }} />
-              </button>
-              <div className="flex-1">
-                <h1 className="text-lg font-semibold text-[#1A1D23]">{selectedProvider.name}</h1>
-                <p className="text-sm text-[#6B7280]">{selectedProvider.role}</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.primary[50] }}>
-                  <Phone className="w-5 h-5" style={{ color: colors.primary[500] }} />
-                </button>
-                <button className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.primary[50] }}>
-                  <Video className="w-5 h-5" style={{ color: colors.primary[500] }} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+      <div className="min-h-screen bg-[#0f172a] flex flex-col">
+        {/* Remote video placeholder */}
+        <div className="flex-1 relative flex items-center justify-center">
+          <div
+            className="absolute inset-0"
+            style={{ background: 'radial-gradient(ellipse at 50% 30%, #134e4a 0%, #0f172a 70%)' }}
+          />
+          {callState === 'connecting' ? (
+            <motion.div
+              className="relative z-10 flex flex-col items-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
             >
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                  message.sender === 'user'
-                    ? 'rounded-br-sm'
-                    : 'rounded-bl-sm'
-                }`}
-                style={{
-                  backgroundColor: message.sender === 'user' ? colors.primary[500] : '#FFFFFF',
-                  color: message.sender === 'user' ? '#FFFFFF' : '#1A1D23',
-                  border: message.sender === 'provider' ? `1px solid ${colors.neutral[200]}` : 'none',
-                }}
+                className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-black text-white mb-4"
+                style={{ background: selectedProvider.color }}
               >
-                <p className="text-sm">{message.text}</p>
-                <p
-                  className="text-xs mt-1"
-                  style={{
-                    color: message.sender === 'user' ? 'rgba(255,255,255,0.7)' : colors.neutral[500],
-                  }}
-                >
-                  {message.time}
-                </p>
+                {selectedProvider.initials}
+              </div>
+              <p className="text-white font-bold text-lg">{selectedProvider.name}</p>
+              <p className="text-white/60 text-sm mt-1">{t.connecting}</p>
+              <div className="flex gap-2 mt-4">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-2 h-2 rounded-full bg-[#0d9488]"
+                    animate={{ scale: [1, 1.5, 1] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.25 }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <div className="relative z-10 flex flex-col items-center">
+              <div
+                className="w-32 h-32 rounded-full flex items-center justify-center text-3xl font-black text-white mb-3"
+                style={{ background: selectedProvider.color }}
+              >
+                {selectedProvider.initials}
+              </div>
+              <p className="text-white font-bold text-xl">{selectedProvider.name}</p>
+              <p className="text-white/70 text-sm mt-1">{selectedProvider.specialty[language]}</p>
+              <div className="flex items-center gap-2 mt-3 bg-white/10 px-3 py-1.5 rounded-full">
+                <div className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse" />
+                <span className="text-white/80 text-sm font-mono">{formatCallTime(callSeconds)}</span>
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Local video pip */}
+          <div className="absolute top-16 right-4 w-24 h-32 rounded-2xl overflow-hidden border-2 border-white/20"
+            style={{ background: '#1e293b' }}
+          >
+            {videoOn ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[#0d9488] flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">Me</span>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[#0f172a]">
+                <VideoOff size={20} className="text-white/40" />
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Disclaimer */}
-        <div className="px-6 py-3 bg-[#FFF9E6] border-t-2" style={{ borderColor: colors.warning[300] }}>
-          <p className="text-xs text-center" style={{ color: colors.warning[800] }}>
-            {t.disclaimer}
-          </p>
-        </div>
-
-        {/* Input */}
-        <div className="bg-white border-t border-[#E5E7EB] px-6 py-4">
-          <div className="max-w-4xl mx-auto flex gap-2">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder={t.typeMessage}
-              className="flex-1 px-4 py-3 bg-[#F7F9FB] border border-[#E5E7EB] rounded-xl text-base focus:outline-none focus:border-[#0066CC]"
-            />
+        {/* Call controls */}
+        <div className="bg-[#1e293b]/80 backdrop-blur-sm px-8 py-6 pb-10">
+          <div className="flex justify-center gap-6">
             <button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim()}
-              className="w-12 h-12 rounded-xl flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50"
-              style={{ backgroundColor: colors.primary[500] }}
+              type="button"
+              aria-label={micOn ? 'Zima Maikrofoni' : 'Washa Maikrofoni'}
+              onClick={() => setMicOn((o) => !o)}
+              className="w-14 h-14 rounded-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              style={{ background: micOn ? 'rgba(255,255,255,0.15)' : '#dc2626' }}
             >
-              <Send className="w-5 h-5 text-white" />
+              {micOn ? <Mic size={22} className="text-white" /> : <MicOff size={22} className="text-white" />}
+            </button>
+            <button
+              type="button"
+              aria-label={t.endCall}
+              onClick={() => { setView('list'); setCallState('connecting'); setCallSeconds(0); }}
+              className="w-16 h-16 rounded-full bg-[#dc2626] flex items-center justify-center shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <PhoneOff size={26} className="text-white" />
+            </button>
+            <button
+              type="button"
+              aria-label={videoOn ? 'Zima Video' : 'Washa Video'}
+              onClick={() => setVideoOn((o) => !o)}
+              className="w-14 h-14 rounded-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              style={{ background: videoOn ? 'rgba(255,255,255,0.15)' : '#dc2626' }}
+            >
+              {videoOn ? <Video size={22} className="text-white" /> : <VideoOff size={22} className="text-white" />}
             </button>
           </div>
         </div>
@@ -255,134 +282,209 @@ export function TelemedicineInterface({ language, onBack }: TelemedicineInterfac
     );
   }
 
-  // Provider Selection View
-  return (
-    <div className="min-h-screen bg-[#F7F9FB] pb-24">
-      {/* Header */}
-      <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
+  /* ── Chat View ── */
+  if (view === 'chat' && selectedProvider) {
+    return (
+      <div className="flex flex-col h-screen bg-[#f8fafc]">
+        {/* Header */}
+        <div
+          className="flex items-center gap-3 px-4 pt-12 pb-4 flex-shrink-0"
+          style={{ background: 'linear-gradient(160deg, #0f172a 0%, #134e4a 100%)' }}
+        >
+          <button
+            type="button"
+            aria-label={language === 'sw' ? 'Rudi' : 'Back'}
+            onClick={() => setView('list')}
+            className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black text-white flex-shrink-0"
+            style={{ background: selectedProvider.color }}
+          >
+            {selectedProvider.initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-sm truncate">{selectedProvider.name}</p>
+            <p className="text-white/50 text-[10px]">{selectedProvider.specialty[language]}</p>
+          </div>
+          <button
+            type="button"
+            aria-label={t.videoCall}
+            onClick={() => { setView('call'); setCallState('connecting'); }}
+            className="w-9 h-9 rounded-xl bg-[#0d9488] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <Video size={16} className="text-white" />
+          </button>
+          <button
+            type="button"
+            aria-label={t.voiceCall}
+            onClick={() => { setView('call'); setCallState('connecting'); }}
+            className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <Phone size={16} className="text-white" />
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+          {messages.map((msg) => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                msg.sender === 'user'
+                  ? 'text-white rounded-tr-sm'
+                  : 'text-[#0f172a] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] rounded-tl-sm'
+              }`}
+              style={msg.sender === 'user' ? { background: 'linear-gradient(135deg, #0d9488, #0f766e)' } : undefined}
+              >
+                {msg.text}
+                <p className="text-[10px] mt-1 opacity-60">{msg.time}</p>
+              </div>
+            </motion.div>
+          ))}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Input */}
+        <div className="flex-shrink-0 bg-white border-t border-slate-100 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder={t.typeMsg}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              className="flex-1 h-11 px-4 rounded-2xl bg-[#f8fafc] text-sm text-[#0f172a] placeholder-gray-400 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+            />
             <button
-              onClick={onBack}
-              className="w-10 h-10 rounded-lg flex items-center justify-center active:scale-95 transition-transform"
-              style={{ backgroundColor: colors.neutral[100] }}
+              type="button"
+              aria-label={t.send}
+              onClick={sendMessage}
+              disabled={!inputValue.trim()}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488]"
+              style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}
             >
-              <ChevronLeft className="w-5 h-5" style={{ color: colors.neutral[700] }} />
+              <Send size={16} className="text-white" />
             </button>
-            <h1 className="text-lg font-semibold text-[#1A1D23]">{t.title}</h1>
           </div>
         </div>
-      </header>
+      </div>
+    );
+  }
 
-      <div className="max-w-4xl mx-auto px-6 pt-6 space-y-6">
-        {availableProviders.length === 0 ? (
-          // Empty State
-          <div className="text-center py-12">
-            <div
-              className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: colors.neutral[100] }}
-            >
-              <Stethoscope className="w-8 h-8" style={{ color: colors.neutral[500] }} />
-            </div>
-            <h2 className="text-lg font-semibold text-[#1A1D23] mb-2">{t.noProviders}</h2>
-            <p className="text-[#6B7280]">{t.noProvidersMessage}</p>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-sm font-semibold text-[#6B7280] uppercase tracking-wide">
-              {t.availableProviders}
-            </h2>
-
-            <div className="space-y-4">
-              {providers.map((provider) => (
-                <MedicalCard key={provider.id}>
-                  <div className="flex gap-4">
-                    {/* Avatar */}
-                    <div
-                      className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: provider.available ? colors.primary[50] : colors.neutral[100] }}
-                    >
-                      <User className="w-7 h-7" style={{ color: provider.available ? colors.primary[500] : colors.neutral[500] }} />
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h3 className="font-semibold text-[#1A1D23]">{provider.name}</h3>
-                        <span
-                          className="text-xs font-medium px-2 py-1 rounded-full flex-shrink-0"
-                          style={{
-                            backgroundColor: provider.available ? colors.success[50] : colors.neutral[100],
-                            color: provider.available ? colors.success[700] : colors.neutral[600],
-                          }}
-                        >
-                          {provider.available ? t.available : t.offline}
-                        </span>
-                      </div>
-                      <p className="text-sm text-[#6B7280] mb-1">{provider.role}</p>
-                      <p className="text-sm text-[#6B7280] mb-3">{provider.specialty}</p>
-
-                      <div className="flex items-center gap-4 text-xs text-[#6B7280] mb-4">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{provider.responseTime}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          <span>{provider.consultations} {t.consultations}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span>⭐</span>
-                          <span>{provider.rating}</span>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <MedicalButton
-                          variant="primary"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedProvider(provider);
-                            setMessages([
-                              {
-                                id: '1',
-                                sender: 'provider',
-                                text: language === 'sw'
-                                  ? `Habari! Mimi ni ${provider.name}. Ninawezaje kukusaidia leo?`
-                                  : `Hello! I'm ${provider.name}. How can I help you today?`,
-                                time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                              },
-                            ]);
-                          }}
-                          disabled={!provider.available}
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          {t.startChat}
-                        </MedicalButton>
-                        <MedicalButton
-                          variant="secondary"
-                          size="sm"
-                          disabled={!provider.available}
-                        >
-                          <Phone className="w-4 h-4" />
-                          {t.callNow}
-                        </MedicalButton>
-                      </div>
-                    </div>
-                  </div>
-                </MedicalCard>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Disclaimer */}
-        <div className="p-4 rounded-xl" style={{ backgroundColor: colors.warning[50], border: `1px solid ${colors.warning[200]}` }}>
-          <p className="text-sm text-center" style={{ color: colors.warning[800] }}>
-            {t.disclaimer}
-          </p>
+  /* ── Provider List View ── */
+  return (
+    <div className="min-h-screen bg-[#f8fafc]">
+      {/* Hero Header */}
+      <div
+        className="px-5 pt-12 pb-6"
+        style={{ background: 'linear-gradient(160deg, #0f172a 0%, #134e4a 100%)' }}
+      >
+        <button
+          type="button"
+          aria-label={language === 'sw' ? 'Rudi' : 'Back'}
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"
+        >
+          <ArrowLeft size={16} />
+          {language === 'sw' ? 'Rudi' : 'Back'}
+        </button>
+        <h1 className="text-white font-black text-2xl">{t.title}</h1>
+        <p className="text-white/60 text-sm mt-1">{t.subtitle}</p>
+        <div className="flex gap-3 mt-4">
+          {[
+            { icon: Shield, label: t.secure },
+            { icon: CheckCircle2, label: t.tmda },
+            { icon: Sparkles, label: t.moh },
+          ].map((badge) => {
+            const Icon = badge.icon;
+            return (
+              <div key={badge.label} className="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1">
+                <Icon size={11} className="text-[#0d9488]" />
+                <span className="text-[10px] text-white/70 font-semibold">{badge.label}</span>
+              </div>
+            );
+          })}
         </div>
+      </div>
+
+      {/* Provider Cards */}
+      <div className="px-4 pt-5 pb-10 space-y-3">
+        {PROVIDERS.map((provider, i) => (
+          <motion.div
+            key={provider.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: i * 0.06 }}
+            className="bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-base font-black text-white flex-shrink-0"
+                style={{ background: provider.color }}
+              >
+                {provider.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-bold text-[#0f172a] text-sm truncate">{provider.name}</p>
+                  <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{
+                      background: provider.available ? '#dcfce7' : '#f1f5f9',
+                      color: provider.available ? '#15803d' : '#64748b',
+                    }}
+                  >
+                    {provider.available ? t.available : t.busy}
+                  </span>
+                </div>
+                <p className="text-[#0d9488] text-xs font-semibold mt-0.5">{provider.specialty[language]}</p>
+                <p className="text-gray-400 text-xs mt-0.5 truncate">{provider.hospital}</p>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="flex items-center gap-1 text-[11px] text-[#f59e0b]">
+                    <Star size={10} fill="#f59e0b" />
+                    {provider.rating}
+                  </span>
+                  <span className="text-[11px] text-gray-400">{provider.consultations.toLocaleString()} {t.consultations}</span>
+                  {provider.available && (
+                    <span className="flex items-center gap-1 text-[11px] text-[#0d9488]">
+                      <Clock size={10} />
+                      {provider.waitMin} {t.mins} {t.wait}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {provider.available && (
+              <div className="flex gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => startChat(provider)}
+                  className="flex-1 h-10 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488]"
+                  style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}
+                >
+                  <MessageCircle size={14} />
+                  {t.startChat}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedProvider(provider); setView('call'); }}
+                  className="flex-1 h-10 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-white bg-[#0f172a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f172a]"
+                >
+                  <Video size={14} />
+                  {t.videoCall}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        ))}
       </div>
     </div>
   );
