@@ -20,7 +20,7 @@ export function ConfettiCelebration({ trigger, onDone }: ConfettiCelebrationProp
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#6366f1', '#f97316', '#10b981', '#f59e0b', '#ec4899'],
+      colors: ['#0d9488', '#f59e0b', '#16a34a', '#0f172a', '#ec4899'],
     });
 
     const t = setTimeout(() => onDone?.(), 1200);

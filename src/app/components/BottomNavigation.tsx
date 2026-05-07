@@ -41,12 +41,12 @@ export function BottomNavigation({ activeRoute, onNavigate }: BottomNavigationPr
               onClick={() => onNavigate(item.id)}
               aria-label={t[item.labelKey]}
               aria-current={isActive ? 'page' : undefined}
-              className="relative flex flex-col items-center justify-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] focus-visible:ring-inset min-h-[48px]"
+              className="relative flex flex-col items-center justify-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488] focus-visible:ring-inset min-h-[48px]"
             >
               {isActive && (
                 <motion.div
                   layoutId="nav-pill"
-                  className="absolute inset-x-2 top-1 bottom-1 rounded-xl bg-[#EEF2FF]"
+                  className="absolute inset-x-2 top-1 bottom-1 rounded-xl bg-[#ccfbf1]"
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}
@@ -59,13 +59,13 @@ export function BottomNavigation({ activeRoute, onNavigate }: BottomNavigationPr
                 <Icon
                   size={22}
                   strokeWidth={isActive ? 2.5 : 1.8}
-                  className={isActive ? 'text-[#6366f1]' : 'text-gray-400'}
+                  className={isActive ? 'text-[#0d9488]' : 'text-gray-400'}
                   aria-hidden="true"
                 />
               </motion.div>
 
               {isActive && (
-                <span className="relative z-10 text-[10px] font-semibold text-[#6366f1]">
+                <span className="relative z-10 text-[10px] font-semibold text-[#0d9488]">
                   {t[item.labelKey]}
                 </span>
               )}

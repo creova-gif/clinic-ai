@@ -37,16 +37,16 @@ interface ModernHomeProps {
 }
 
 const QUICK_ACTIONS = [
-  { id: 'medications',    icon: Pill,      labelKey: 'todayMeds' as const,  iconCls: 'text-[#6366f1]', bgCls: 'bg-[#6366f11a]' },
-  { id: 'appointments',  icon: Calendar,  labelKey: 'nextAppt' as const,   iconCls: 'text-[#f97316]', bgCls: 'bg-[#f973161a]' },
-  { id: 'symptom-checker', icon: Activity, labelKey: 'symptoms' as const,  iconCls: 'text-[#10b981]', bgCls: 'bg-[#10b9811a]' },
-  { id: 'clinic-finder', icon: MapPin,    labelKey: 'clinics' as const,    iconCls: 'text-[#f59e0b]', bgCls: 'bg-[#f59e0b1a]' },
+  { id: 'medications',     icon: Pill,      labelKey: 'todayMeds' as const, iconCls: 'text-[#0d9488]', bgCls: 'bg-[#0d94881a]' },
+  { id: 'appointments',   icon: Calendar,  labelKey: 'nextAppt' as const,  iconCls: 'text-[#f59e0b]', bgCls: 'bg-[#f59e0b1a]' },
+  { id: 'symptom-checker', icon: Activity, labelKey: 'symptoms' as const,  iconCls: 'text-[#16a34a]', bgCls: 'bg-[#16a34a1a]' },
+  { id: 'clinic-finder',  icon: MapPin,    labelKey: 'clinics' as const,   iconCls: 'text-[#d97706]', bgCls: 'bg-[#d977061a]' },
 ];
 
 const MED_BORDER: Record<string, string> = {
-  taken:   'border-l-[#10b981]',
-  missed:  'border-l-[#ef4444]',
-  pending: 'border-l-[#f97316]',
+  taken:   'border-l-[#16a34a]',
+  missed:  'border-l-[#dc2626]',
+  pending: 'border-l-[#f59e0b]',
 };
 
 function getGreeting(lang: 'sw' | 'en') {
@@ -91,7 +91,7 @@ export function ModernHome({
   });
 
   return (
-    <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+    <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
       <ConfettiCelebration trigger={celebrate} onDone={() => setCelebrate(false)} />
 
       <HeroHeader
@@ -113,7 +113,8 @@ export function ModernHome({
           whileTap={{ scale: 0.97 }}
           onClick={() => onNavigate('emergency')}
           aria-label={tr.emergency}
-          className="w-full flex items-center justify-center gap-3 rounded-2xl py-3.5 font-black text-white text-base bg-gradient-to-br from-red-500 to-red-600 min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+          className="w-full flex items-center justify-center gap-3 rounded-2xl py-3.5 font-black text-white text-base min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#dc2626]"
+          style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)' }}
         >
           <AlertTriangle size={20} aria-hidden="true" />
           {tr.emergency}
@@ -131,7 +132,7 @@ export function ModernHome({
                 whileTap={{ scale: 0.96 }}
                 onClick={() => onNavigate(action.id)}
                 aria-label={tr[action.labelKey]}
-                className="flex flex-col items-center gap-2 rounded-2xl py-3 px-2 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1]"
+                className="flex flex-col items-center gap-2 rounded-2xl py-3 px-2 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488]"
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${action.bgCls}`}>
                   <Icon size={20} className={action.iconCls} aria-hidden="true" />
@@ -152,11 +153,11 @@ export function ModernHome({
             whileTap={{ scale: 0.98 }}
             onClick={() => onNavigate('medications')}
             aria-label={tr.todayMeds}
-            className={`text-left bg-white rounded-2xl p-4 border-l-4 ${MED_BORDER[medicationStatus]} shadow-[0_2px_12px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1]`}
+            className={`text-left bg-white rounded-2xl p-4 border-l-4 ${MED_BORDER[medicationStatus]} shadow-[0_2px_12px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488]`}
           >
-            <Pill size={18} className="text-[#6366f1]" aria-hidden="true" />
+            <Pill size={18} className="text-[#0d9488]" aria-hidden="true" />
             <p className="mt-2 text-xs font-semibold text-gray-500">{tr.todayMeds}</p>
-            <p className="text-sm font-bold mt-0.5 text-[#1e1b4b]">
+            <p className="text-sm font-bold mt-0.5 text-[#0f172a]">
               {medicationStatus === 'taken' ? tr.taken : tr.pending}
             </p>
           </motion.button>
@@ -167,11 +168,11 @@ export function ModernHome({
             whileTap={{ scale: 0.98 }}
             onClick={() => onNavigate('appointments')}
             aria-label={tr.nextAppt}
-            className="text-left bg-white rounded-2xl p-4 border-l-4 border-l-[#6366f1] shadow-[0_2px_12px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1]"
+            className="text-left bg-white rounded-2xl p-4 border-l-4 border-l-[#0d9488] shadow-[0_2px_12px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488]"
           >
-            <Calendar size={18} className="text-[#f97316]" aria-hidden="true" />
+            <Calendar size={18} className="text-[#f59e0b]" aria-hidden="true" />
             <p className="mt-2 text-xs font-semibold text-gray-500">{tr.nextAppt}</p>
-            <p className="text-sm font-bold mt-0.5 text-[#1e1b4b]">
+            <p className="text-sm font-bold mt-0.5 text-[#0f172a]">
               {nextAppointment?.date ?? tr.noAppt}
             </p>
             {nextAppointment?.facility && (
@@ -184,10 +185,10 @@ export function ModernHome({
         {aiTip && (
           <motion.div
             {...stagger(7)}
-            className="bg-white rounded-2xl p-4 border-l-4 border-l-[#10b981] shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+            className="bg-white rounded-2xl p-4 border-l-4 border-l-[#16a34a] shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
             aria-live="polite"
           >
-            <p className="text-xs font-semibold text-[#10b981]">{tr.aiTip}</p>
+            <p className="text-xs font-semibold text-[#16a34a]">{tr.aiTip}</p>
             <p className="text-sm text-gray-600 mt-1 leading-relaxed">{aiTip}</p>
           </motion.div>
         )}

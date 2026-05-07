@@ -291,7 +291,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
         : 'Kawaida';
 
     return (
-      <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+      <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
         <HeroHeader greeting="Angalia Dalili" subtitle="Matokeo ya Tathmini">
           <button
             type="button"
@@ -569,7 +569,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
               <details className="group">
                 <summary className="flex items-center gap-3 cursor-pointer list-none hover:opacity-75 transition-opacity">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#eef2ff] group-hover:bg-[#EFF6FF] transition-colors">
-                    <Info className="w-5 h-5 text-[#6366f1]" />
+                    <Info className="w-5 h-5 text-[#0d9488]" />
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-[#1A1D23] mb-0.5">
@@ -679,7 +679,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
   }
 
   return (
-    <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+    <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
       <HeroHeader greeting="Angalia Dalili" subtitle="Hatua kwa hatua">
         <button
           type="button"
@@ -706,7 +706,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
             <div
               key={i}
               className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                i < currentStep ? 'bg-[#6366f1]' : 'bg-gray-200'
+                i < currentStep ? 'bg-[#0d9488]' : 'bg-gray-200'
               }`}
             />
           ))}

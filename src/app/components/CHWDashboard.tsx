@@ -184,7 +184,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
   };
 
   return (
-    <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+    <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
       <OfflineBanner />
       <HeroHeader greeting="Dawa za Jamii" />
 
@@ -204,7 +204,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { icon: <Home className="h-5 w-5 text-[#6366f1]" />, value: '156', label: t.households },
+            { icon: <Home className="h-5 w-5 text-[#0d9488]" />, value: '156', label: t.households },
             { icon: <Calendar className="h-5 w-5 text-[#10b981]" />, value: '8', label: t.visits, valueClass: 'text-[#10b981]' },
             { icon: <AlertTriangle className="h-5 w-5 text-[#ef4444]" />, value: '12', label: t.highRisk, valueClass: 'text-[#ef4444]' },
             { icon: <TrendingUp className="h-5 w-5 text-[#f97316]" />, value: '5', label: t.referrals, valueClass: 'text-[#f97316]' },
@@ -220,7 +220,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                 {stat.icon}
                 <span>{stat.label}</span>
               </div>
-              <div className={`text-3xl font-bold ${stat.valueClass ?? 'text-[#1e1b4b]'}`}>{stat.value}</div>
+              <div className={`text-3xl font-bold ${stat.valueClass ?? 'text-[#0f172a]'}`}>{stat.value}</div>
             </motion.div>
           ))}
         </div>
@@ -254,7 +254,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
           <div className="bg-gradient-to-r from-red-50 to-orange-50 px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Zap className="h-6 w-6 text-[#ef4444]" />
-              <h2 className="text-xl font-semibold text-[#1e1b4b]">{t.urgentAction}</h2>
+              <h2 className="text-xl font-semibold text-[#0f172a]">{t.urgentAction}</h2>
             </div>
             <StatusBadge variant="danger" label={`${sortedPriorities.length} ${t.urgentPatients}`} />
           </div>
@@ -272,7 +272,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-lg font-bold text-[#1e1b4b]">{household.name}</h3>
+                      <h3 className="text-lg font-bold text-[#0f172a]">{household.name}</h3>
                       <StatusBadge
                         variant={getRiskBadgeVariant(household.risk)}
                         label={getRiskLabel(household.risk, household.riskScore)}
@@ -284,15 +284,15 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 border-l-[4px] border-l-[#6366f1] p-3 rounded mb-3">
+                <div className="bg-gray-50 border-l-[4px] border-l-[#0d9488] p-3 rounded mb-3">
                   <p className="text-sm font-medium text-gray-900">{household.reason}</p>
                 </div>
 
-                <div className="bg-[#eff6ff] border-l-[4px] border-l-[#6366f1] p-3 rounded mb-3">
+                <div className="bg-[#ccfbf1] border-l-[4px] border-l-[#0d9488] p-3 rounded mb-3">
                   <div className="flex items-start gap-2">
-                    <Zap className="w-4 h-4 text-[#6366f1] mt-0.5 flex-shrink-0" />
+                    <Zap className="w-4 h-4 text-[#0d9488] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-semibold text-[#1e1b4b] uppercase mb-1">{t.aiRecommends}</p>
+                      <p className="text-xs font-semibold text-[#0f172a] uppercase mb-1">{t.aiRecommends}</p>
                       <p className="text-sm text-[#3730a3]">{household.aiAction}</p>
                     </div>
                   </div>
@@ -352,7 +352,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
         {/* Performance */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-5">
-            <div className="flex items-center gap-2 mb-4 text-[#1e1b4b] font-semibold">
+            <div className="flex items-center gap-2 mb-4 text-[#0f172a] font-semibold">
               <MapPin className="h-5 w-5 text-[#10b981]" />
               {t.coverage}
             </div>
@@ -365,7 +365,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                 <div key={item.label}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-700">{item.label}</span>
-                    <span className="font-semibold text-[#1e1b4b]">{item.value}%</span>
+                    <span className="font-semibold text-[#0f172a]">{item.value}%</span>
                   </div>
                   <Progress value={item.value} className="h-2" />
                 </div>
@@ -374,8 +374,8 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
           </div>
 
           <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-5">
-            <div className="flex items-center gap-2 mb-4 text-[#1e1b4b] font-semibold">
-              <TrendingUp className="h-5 w-5 text-[#6366f1]" />
+            <div className="flex items-center gap-2 mb-4 text-[#0f172a] font-semibold">
+              <TrendingUp className="h-5 w-5 text-[#0d9488]" />
               {t.performance}
             </div>
             <div className="space-y-3">
@@ -383,7 +383,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                 <span className="text-sm text-gray-700">{language === 'sw' ? 'Ziara Wiki Hii' : 'Visits This Week'}</span>
                 <StatusBadge variant="success" label="42" />
               </div>
-              <div className="flex items-center justify-between p-3 bg-[#eff6ff] rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-[#ccfbf1] rounded-xl">
                 <span className="text-sm text-gray-700">{language === 'sw' ? 'Marejesho Yaliyofanikiwa' : 'Successful Referrals'}</span>
                 <StatusBadge variant="info" label="38" />
               </div>

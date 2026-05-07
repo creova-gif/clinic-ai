@@ -10,10 +10,10 @@ interface StatusBadgeProps {
 }
 
 const config: Record<StatusVariant, { bg: string; color: string; icon: string }> = {
-  success: { bg: '#d1fae5', color: '#065f46', icon: '✓' },
+  success: { bg: '#dcfce7', color: '#15803d', icon: '✓' },
   warning: { bg: '#fef3c7', color: '#92400e', icon: '⚠' },
-  danger:  { bg: '#fee2e2', color: '#991b1b', icon: '!' },
-  info:    { bg: '#e0e7ff', color: '#3730a3', icon: 'ℹ' },
+  danger:  { bg: '#fee2e2', color: '#b91c1c', icon: '!' },
+  info:    { bg: '#ccfbf1', color: '#0f766e', icon: 'ℹ' },
   pending: { bg: '#fef9c3', color: '#713f12', icon: '◷' },
   normal:  { bg: '#f0fdf4', color: '#166534', icon: '●' },
 };

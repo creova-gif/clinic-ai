@@ -117,7 +117,7 @@ export function MedicationTracker({ onBack }: { onBack: () => void }) {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+    <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
       {/* Confetti fires on card-level take action */}
       <ConfettiCelebration
         trigger={confettiKey !== null}
@@ -148,7 +148,7 @@ export function MedicationTracker({ onBack }: { onBack: () => void }) {
       {/* Loading state */}
       {isLoading && (
         <div className="flex items-center justify-center py-12" aria-live="polite">
-          <div className="w-8 h-8 rounded-full border-4 border-[#6366f1] border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-4 border-[#0d9488] border-t-transparent animate-spin" />
         </div>
       )}
 
@@ -171,10 +171,10 @@ export function MedicationTracker({ onBack }: { onBack: () => void }) {
             const isMissed = item.status === 'missed';
 
             const borderColor = isTaken
-              ? 'border-l-[#10b981]'
+              ? 'border-l-[#16a34a]'
               : isMissed
-              ? 'border-l-[#ef4444]'
-              : 'border-l-[#f97316]';
+              ? 'border-l-[#dc2626]'
+              : 'border-l-[#f59e0b]';
 
             const bgColor = isTaken
               ? 'bg-[#f0fdf4]'
@@ -221,13 +221,13 @@ export function MedicationTracker({ onBack }: { onBack: () => void }) {
                         <Pill
                           className="w-6 h-6"
                           style={{
-                            color: isTaken ? '#10b981' : isMissed ? '#ef4444' : '#f97316',
+                            color: isTaken ? '#16a34a' : isMissed ? '#dc2626' : '#f59e0b',
                           }}
                         />
                       </div>
 
                       <div className="min-w-0">
-                        <p className="font-bold text-[#1e1b4b] truncate">{item.name}</p>
+                        <p className="font-bold text-[#0f172a] truncate">{item.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{item.dosage}</p>
                         <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
                           <Clock className="w-3 h-3" />
@@ -254,13 +254,13 @@ export function MedicationTracker({ onBack }: { onBack: () => void }) {
                       )}
 
                       {isTaken && (
-                        <span className="text-xs font-semibold text-[#10b981] min-h-[48px] flex items-center">
+                        <span className="text-xs font-semibold text-[#16a34a] min-h-[48px] flex items-center">
                           Imechukuliwa ✓
                         </span>
                       )}
 
                       {isMissed && (
-                        <span className="text-xs font-semibold text-[#ef4444] min-h-[48px] flex items-center">
+                        <span className="text-xs font-semibold text-[#dc2626] min-h-[48px] flex items-center">
                           Umekosa dawa
                         </span>
                       )}

@@ -99,13 +99,13 @@ const CLINICS = ['Mwananyamala Hospital', 'Kigogo Health Center', 'Sinza Dispens
 function getStatusConfig(status: AppointmentStatus, t: typeof translations['en']) {
   switch (status) {
     case 'confirmed':
-      return { variant: 'info' as const, label: t.confirmed, borderColor: 'border-l-[#6366f1]' };
+      return { variant: 'info' as const, label: t.confirmed, borderColor: 'border-l-[#0d9488]' };
     case 'pending':
-      return { variant: 'pending' as const, label: t.pending, borderColor: 'border-l-[#6366f1]' };
+      return { variant: 'pending' as const, label: t.pending, borderColor: 'border-l-[#0d9488]' };
     case 'completed':
-      return { variant: 'success' as const, label: t.completed, borderColor: 'border-l-[#10b981]' };
+      return { variant: 'success' as const, label: t.completed, borderColor: 'border-l-[#16a34a]' };
     case 'cancelled':
-      return { variant: 'danger' as const, label: t.cancelled, borderColor: 'border-l-[#ef4444]' };
+      return { variant: 'danger' as const, label: t.cancelled, borderColor: 'border-l-[#dc2626]' };
   }
 }
 
@@ -183,7 +183,7 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
   const activeList = activeTab === 'upcoming' ? upcomingAppointments : pastAppointments;
 
   return (
-    <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+    <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
       <ConfettiCelebration trigger={showConfetti} onDone={() => setShowConfetti(false)} />
 
       <HeroHeader greeting={t.title}>
@@ -195,7 +195,7 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
             onClick={() => setActiveTab('upcoming')}
             className={`flex-1 py-2 px-4 rounded-xl text-sm font-semibold transition-all min-h-[40px] ${
               activeTab === 'upcoming'
-                ? 'bg-white text-[#1e1b4b]'
+                ? 'bg-white text-[#0f172a]'
                 : 'bg-white/20 text-white'
             }`}
           >
@@ -207,7 +207,7 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
             onClick={() => setActiveTab('past')}
             className={`flex-1 py-2 px-4 rounded-xl text-sm font-semibold transition-all min-h-[40px] ${
               activeTab === 'past'
-                ? 'bg-white text-[#1e1b4b]'
+                ? 'bg-white text-[#0f172a]'
                 : 'bg-white/20 text-white'
             }`}
           >
@@ -239,12 +239,12 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
                 aria-label={`${dayAbbr[dayOfWeek]} ${date.getDate()}`}
                 aria-pressed={isSelected}
                 onClick={() => setSelectedDate(date)}
-                className={`flex-shrink-0 snap-start flex flex-col items-center rounded-2xl py-2.5 w-12 min-h-[64px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366f1] ${
+                className={`flex-shrink-0 snap-start flex flex-col items-center rounded-2xl py-2.5 w-12 min-h-[64px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488] ${
                   isSelected
-                    ? 'bg-[#6366f1] text-white shadow-[0_2px_8px_rgba(99,102,241,0.4)]'
+                    ? 'bg-[#0d9488] text-white shadow-[0_2px_8px_rgba(13,148,136,0.4)]'
                     : isToday
-                    ? 'bg-[#EEF2FF] text-[#6366f1] border border-[#6366f1]'
-                    : 'bg-white text-[#1e1b4b] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
+                    ? 'bg-[#ccfbf1] text-[#0d9488] border border-[#0d9488]'
+                    : 'bg-white text-[#0f172a] shadow-[0_1px_4px_rgba(0,0,0,0.06)]'
                 }`}
               >
                 <span className={`text-[9px] font-semibold uppercase ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
@@ -295,7 +295,7 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
                   {/* Top row: doctor + badge */}
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-bold text-[#1e1b4b] text-base leading-snug">
+                      <p className="font-bold text-[#0f172a] text-base leading-snug">
                         {appointment.doctor}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
@@ -311,11 +311,11 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
                   {/* Date + time */}
                   <div className="flex items-center gap-3 mt-3">
                     <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-                      <Calendar className="w-4 h-4 text-[#6366f1]" aria-hidden="true" />
+                      <Calendar className="w-4 h-4 text-[#0d9488]" aria-hidden="true" />
                       {appointment.date}
                     </div>
                     <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-                      <Clock className="w-4 h-4 text-[#6366f1]" aria-hidden="true" />
+                      <Clock className="w-4 h-4 text-[#0d9488]" aria-hidden="true" />
                       {appointment.time}
                     </div>
                   </div>
@@ -365,7 +365,7 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
           variant="primary"
           size="md"
           onClick={() => { setShowBooking(true); setBookingStep(1); }}
-          className="rounded-full w-14 h-14 p-0 shadow-[0_4px_20px_rgba(99,102,241,0.4)]"
+          className="rounded-full w-14 h-14 p-0 shadow-[0_4px_20px_rgba(13,148,136,0.4)]"
         >
           <Plus className="w-6 h-6" aria-hidden="true" />
         </AnimatedButton>
@@ -402,7 +402,7 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
                   <p className="text-xs text-gray-400 font-medium">
                     {language === 'sw' ? `Hatua ${bookingStep} kati ya 3` : `Step ${bookingStep} of 3`}
                   </p>
-                  <h3 className="text-lg font-bold text-[#1e1b4b]">
+                  <h3 className="text-lg font-bold text-[#0f172a]">
                     {bookingStep === 1
                       ? (language === 'sw' ? 'Chagua Huduma' : 'Select Specialty')
                       : bookingStep === 2
@@ -431,8 +431,8 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
                       onClick={() => { setBookingSpecialty(spec); setBookingStep(2); }}
                       className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 transition-all min-h-[56px] ${
                         bookingSpecialty === spec
-                          ? 'border-[#6366f1] bg-[#EEF2FF] text-[#1e1b4b]'
-                          : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-[#6366f1]'
+                          ? 'border-[#0d9488] bg-[#ccfbf1] text-[#0f172a]'
+                          : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-[#0d9488]'
                       }`}
                     >
                       <span className="font-semibold text-sm">{spec}</span>
@@ -461,8 +461,8 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
                       onClick={() => { setBookingClinic(clinic); setBookingStep(3); }}
                       className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 transition-all min-h-[56px] ${
                         bookingClinic === clinic
-                          ? 'border-[#6366f1] bg-[#EEF2FF] text-[#1e1b4b]'
-                          : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-[#6366f1]'
+                          ? 'border-[#0d9488] bg-[#ccfbf1] text-[#0f172a]'
+                          : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-[#0d9488]'
                       }`}
                     >
                       <span className="font-semibold text-sm">{clinic}</span>
@@ -494,7 +494,7 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
                       value={bookingDate}
                       onChange={(e) => setBookingDate(e.target.value)}
                       min={today.toISOString().split('T')[0]}
-                      className="mt-1.5 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-[#1e1b4b] font-medium min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
+                      className="mt-1.5 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-[#0f172a] font-medium min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
                     />
                   </div>
 
@@ -512,8 +512,8 @@ export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
                           onClick={() => setBookingTime(slot)}
                           className={`py-3 rounded-xl text-sm font-semibold transition-all min-h-[48px] ${
                             bookingTime === slot
-                              ? 'bg-[#6366f1] text-white shadow-[0_2px_8px_rgba(99,102,241,0.4)]'
-                              : 'bg-gray-50 text-gray-700 border border-gray-100 hover:border-[#6366f1]'
+                              ? 'bg-[#0d9488] text-white shadow-[0_2px_8px_rgba(13,148,136,0.4)]'
+                              : 'bg-gray-50 text-gray-700 border border-gray-100 hover:border-[#0d9488]'
                           }`}
                         >
                           {slot}

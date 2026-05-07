@@ -16,10 +16,10 @@ const variantStyles: Record<string, string> = {
 };
 
 const variantBg: Record<string, React.CSSProperties> = {
-  primary: { background: 'linear-gradient(135deg, #6366f1, #4f46e5)' },
-  secondary: { background: '#1e1b4b' },
-  ghost: { color: '#6366f1' },
-  danger: { background: '#ef4444' },
+  primary: { background: 'linear-gradient(135deg, #0d9488, #0f766e)' },
+  secondary: { background: '#0f172a' },
+  ghost: { color: '#0d9488' },
+  danger: { background: '#dc2626' },
 };
 
 const sizeStyles: Record<string, string> = {
@@ -44,7 +44,7 @@ export function AnimatedButton({
       className={`
         inline-flex items-center justify-center gap-2 rounded-xl font-semibold
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
-        focus-visible:ring-[#6366f1] disabled:opacity-50 disabled:pointer-events-none
+        focus-visible:ring-[#0d9488] disabled:opacity-50 disabled:pointer-events-none
         ${variantStyles[variant]} ${sizeStyles[size]}
         ${fullWidth ? 'w-full' : ''}
         ${className}

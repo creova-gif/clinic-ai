@@ -329,7 +329,7 @@ export function Profile({
             <button
               type="button"
               aria-label={t.logout.keepData}
-              className="w-full p-3 border-2 border-gray-200 rounded-lg hover:border-[#1e1b4b] transition-colors text-left min-h-[48px]"
+              className="w-full p-3 border-2 border-gray-200 rounded-lg hover:border-[#0f172a] transition-colors text-left min-h-[48px]"
             >
               <p className="text-sm font-medium text-[#1E1E1E]">{t.logout.keepData}</p>
               <p className="text-xs text-gray-500 mt-1">
@@ -375,7 +375,7 @@ export function Profile({
   }
 
   return (
-    <main role="main" className="min-h-screen bg-[#FFF9F5] pb-20">
+    <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
       {/* Emergency shortcut */}
       <div className="fixed top-4 right-4 z-50">
         <MedicalButton
@@ -401,17 +401,17 @@ export function Profile({
         >
           <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-3 text-center">
             <p className="text-xs text-gray-400 mb-1">{t.healthStats.bp}</p>
-            <p className="text-base font-bold text-[#1e1b4b]">120/80</p>
+            <p className="text-base font-bold text-[#0f172a]">120/80</p>
           </div>
           <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-3 text-center">
             <p className="text-xs text-gray-400 mb-1">{t.healthStats.weight}</p>
-            <p className="text-base font-bold text-[#1e1b4b]">
+            <p className="text-base font-bold text-[#0f172a]">
               {language === 'sw' ? 'Hj.' : 'N/A'}
             </p>
           </div>
           <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-3 text-center">
             <p className="text-xs text-gray-400 mb-1">{t.healthStats.bloodType}</p>
-            <p className="text-base font-bold text-[#1e1b4b]">
+            <p className="text-base font-bold text-[#0f172a]">
               {userData.bloodType ?? t.healthStats.unknown}
             </p>
           </div>
@@ -426,7 +426,7 @@ export function Profile({
         >
           <div
             className="p-5 text-white"
-            style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #f97316 100%)' }}
+            style={{ background: 'linear-gradient(135deg, #0f172a 0%, #134e4a 55%, #0d9488 100%)' }}
           >
             <p className="text-xs font-semibold tracking-widest uppercase opacity-70 mb-1">
               {t.sections.afyaId}
@@ -516,12 +516,12 @@ export function Profile({
               className="flex items-center justify-between py-1"
             >
               <div>
-                <p className="text-sm font-medium text-[#1e1b4b]">{contact.name}</p>
+                <p className="text-sm font-medium text-[#0f172a]">{contact.name}</p>
                 <p className="text-xs text-gray-400">{contact.relationship}</p>
               </div>
               <a
                 href={`tel:${contact.phone}`}
-                className="text-sm font-semibold text-[#6366f1]"
+                className="text-sm font-semibold text-[#0d9488]"
                 aria-label={`${language === 'sw' ? 'Piga simu' : 'Call'} ${contact.name}`}
               >
                 {contact.phone}
@@ -531,7 +531,7 @@ export function Profile({
           <button
             type="button"
             aria-label={t.emergencyContact.addContact}
-            className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-colors min-h-[48px]"
+            className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-[#0d9488] hover:text-[#0d9488] transition-colors min-h-[48px]"
           >
             + {t.emergencyContact.addContact}
           </button>
@@ -552,7 +552,7 @@ export function Profile({
             {linkedFacilities.length > 0 ? (
               <div className="space-y-1">
                 {linkedFacilities.map((facility, i) => (
-                  <p key={i} className="text-sm text-[#1e1b4b]">· {facility}</p>
+                  <p key={i} className="text-sm text-[#0f172a]">· {facility}</p>
                 ))}
               </div>
             ) : (
@@ -574,7 +574,7 @@ export function Profile({
                     className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-indigo-50 transition-colors min-h-[48px]"
                   >
                     <div className="text-left">
-                      <p className="text-sm font-semibold text-[#1e1b4b]">{dependent.name}</p>
+                      <p className="text-sm font-semibold text-[#0f172a]">{dependent.name}</p>
                       <p className="text-xs text-gray-400">
                         {dependent.relationship} · {dependent.age} {t.fields.years}
                       </p>
@@ -589,7 +589,7 @@ export function Profile({
             <button
               type="button"
               aria-label={t.dependents.add}
-              className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-colors min-h-[48px]"
+              className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-[#0d9488] hover:text-[#0d9488] transition-colors min-h-[48px]"
             >
               + {t.dependents.add}
             </button>
@@ -599,13 +599,13 @@ export function Profile({
         {/* Privacy & Data */}
         <SectionCard title={t.sections.privacy} delay={0.42}>
           <MenuRow
-            icon={<Shield className="w-4 h-4 text-[#6366f1]" />}
+            icon={<Shield className="w-4 h-4 text-[#0d9488]" />}
             label={t.privacy.accessLog}
             description={t.privacy.viewLog}
             onClick={() => setShowAccessLog(true)}
           />
           <MenuRow
-            icon={<Shield className="w-4 h-4 text-[#6366f1]" />}
+            icon={<Shield className="w-4 h-4 text-[#0d9488]" />}
             label={t.privacy.exportData}
             description="PDPA Compliance"
             onClick={() => alert('Export data functionality')}
@@ -627,7 +627,7 @@ export function Profile({
                 onClick={() => onLanguageChange('sw')}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all min-h-[48px] ${
                   language === 'sw'
-                    ? 'bg-[#6366f1] text-white shadow-[0_2px_8px_rgba(99,102,241,0.4)]'
+                    ? 'bg-[#0d9488] text-white shadow-[0_2px_8px_rgba(13,148,136,0.4)]'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
@@ -639,7 +639,7 @@ export function Profile({
                 onClick={() => onLanguageChange('en')}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all min-h-[48px] ${
                   language === 'en'
-                    ? 'bg-[#6366f1] text-white shadow-[0_2px_8px_rgba(99,102,241,0.4)]'
+                    ? 'bg-[#0d9488] text-white shadow-[0_2px_8px_rgba(13,148,136,0.4)]'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
@@ -648,13 +648,13 @@ export function Profile({
             </div>
           </div>
           <MenuRow
-            icon={<Bell className="w-4 h-4 text-[#6366f1]" />}
+            icon={<Bell className="w-4 h-4 text-[#0d9488]" />}
             label={t.settings.notifications}
             description={language === 'sw' ? 'Dhibiti taarifa' : 'Manage notification preferences'}
             onClick={() => {}}
           />
           <MenuRow
-            icon={<Lock className="w-4 h-4 text-[#6366f1]" />}
+            icon={<Lock className="w-4 h-4 text-[#0d9488]" />}
             label={t.settings.accessibility}
             description={`${t.settings.fontSize}, ${t.settings.highContrast}`}
             onClick={() => {}}
@@ -664,14 +664,14 @@ export function Profile({
         {/* Security */}
         <SectionCard title={t.sections.security} delay={0.54}>
           <MenuRow
-            icon={<Lock className="w-4 h-4 text-[#6366f1]" />}
+            icon={<Lock className="w-4 h-4 text-[#0d9488]" />}
             label={t.security.changePIN}
             description={language === 'sw' ? 'Usalama wa kifaa' : 'Device security'}
             onClick={() => {}}
           />
           <div className="flex items-center justify-between py-2 min-h-[48px]">
             <div>
-              <p className="text-sm font-medium text-[#1e1b4b]">{t.security.biometric}</p>
+              <p className="text-sm font-medium text-[#0f172a]">{t.security.biometric}</p>
               <p className="text-xs text-gray-400">{t.security.disabled}</p>
             </div>
             <button
@@ -681,7 +681,7 @@ export function Profile({
             />
           </div>
           <div className="py-1">
-            <p className="text-sm font-medium text-[#1e1b4b]">{t.security.autoLock}</p>
+            <p className="text-sm font-medium text-[#0f172a]">{t.security.autoLock}</p>
             <p className="text-xs text-gray-400">
               {t.security.lockAfter} 2 {t.security.minutes}
             </p>
@@ -717,7 +717,7 @@ export function Profile({
             className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
           >
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#1e1b4b]">{t.privacy.accessLog}</h3>
+              <h3 className="text-base font-bold text-[#0f172a]">{t.privacy.accessLog}</h3>
               <button
                 type="button"
                 aria-label={language === 'sw' ? 'Funga' : 'Close'}
@@ -739,7 +739,7 @@ export function Profile({
                       key={log.id}
                       className="p-3 bg-gray-50 rounded-xl border border-gray-100"
                     >
-                      <p className="text-sm font-medium text-[#1e1b4b]">{log.accessType}</p>
+                      <p className="text-sm font-medium text-[#0f172a]">{log.accessType}</p>
                       <p className="text-xs text-gray-400 mt-1">
                         {t.privacy.by} {log.accessor} · {log.facility}
                       </p>
@@ -779,7 +779,7 @@ function SectionCard({
       className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden"
     >
       <div className="px-4 py-3 border-b border-gray-100">
-        <h2 className="text-sm font-bold text-[#1e1b4b] uppercase tracking-wide">
+        <h2 className="text-sm font-bold text-[#0f172a] uppercase tracking-wide">
           {title}
         </h2>
       </div>
@@ -792,7 +792,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-3">
       <p className="text-sm text-gray-400 flex-shrink-0">{label}</p>
-      <p className="text-sm font-medium text-[#1e1b4b] text-right">{value}</p>
+      <p className="text-sm font-medium text-[#0f172a] text-right">{value}</p>
     </div>
   );
 }
@@ -817,7 +817,7 @@ function MenuRow({
     >
       <span className="flex-shrink-0">{icon}</span>
       <div className="flex-1 text-left">
-        <p className="text-sm font-medium text-[#1e1b4b]">{label}</p>
+        <p className="text-sm font-medium text-[#0f172a]">{label}</p>
         <p className="text-xs text-gray-400">{description}</p>
       </div>
       <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" aria-hidden="true" />

@@ -11,9 +11,9 @@ interface HealthScoreRingProps {
 
 function scoreColor(score: number, max: number) {
   const pct = score / max;
-  if (pct >= 0.8) return '#10b981';
+  if (pct >= 0.8) return '#16a34a';
   if (pct >= 0.6) return '#f59e0b';
-  return '#ef4444';
+  return '#dc2626';
 }
 
 export function HealthScoreRing({

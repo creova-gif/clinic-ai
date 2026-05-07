@@ -11,7 +11,7 @@ export function KangaStripe({ className = '' }: KangaStripeProps) {
       aria-hidden="true"
       style={{
         height: '3px',
-        background: 'repeating-linear-gradient(90deg, #1e1b4b 0px, #1e1b4b 6px, #f59e0b 6px, #f59e0b 12px, #10b981 12px, #10b981 18px)',
+        background: 'repeating-linear-gradient(90deg, #0d9488 0px, #0d9488 6px, #f59e0b 6px, #f59e0b 12px, #0f172a 12px, #0f172a 18px)',
       }}
     />
   );

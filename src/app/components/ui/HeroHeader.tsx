@@ -22,7 +22,7 @@ export function HeroHeader({
   return (
     <header
       className={`relative ${className}`}
-      style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #f97316 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #134e4a 55%, #0d9488 100%)' }}
     >
       <KangaStripe />
 
@@ -51,7 +51,7 @@ export function HeroHeader({
                     aria-live="polite"
                     aria-label={isOnline ? 'Mtandao: unapatikana' : 'Mtandao: haupatikani'}
                     className="w-2.5 h-2.5 rounded-full border-2 border-white flex-shrink-0"
-                    style={{ background: isOnline ? '#10b981' : '#ef4444' }}
+                    style={{ background: isOnline ? '#16a34a' : '#dc2626' }}
                   />
                 )}
               </div>

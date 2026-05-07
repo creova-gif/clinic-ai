@@ -1,31 +1,10 @@
-/**
- * ClinicalDashboard - Unified Clinical Dashboard for Doctors/Nurses
- * Today's patients, priority cases, pending follow-ups
- * AI-assisted triage, digital intake, efficient workflow
- * One screen. Zero chaos.
- */
-
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  Activity,
-  Users,
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  FileText,
-  Search,
-  Filter,
-  ChevronRight,
-  User,
-  Calendar,
-  Stethoscope,
-  TrendingUp,
-  MessageCircle,
-  Bell,
-  LogOut,
+  Users, Clock, AlertTriangle, CheckCircle2, Search,
+  ChevronRight, Pill, FileText, ClipboardList, Sparkles,
+  ChevronDown, ChevronUp, LogOut, Bell, X, User,
 } from 'lucide-react';
-import { Button } from './ui/button';
 
 interface ClinicalDashboardProps {
   language: 'sw' | 'en';
@@ -38,724 +17,491 @@ interface Patient {
   name: string;
   age: number;
   gender: 'M' | 'F';
-  chiefComplaint: { sw: string; en: string };
+  afyaId: string;
+  complaint: { sw: string; en: string };
   arrivalTime: string;
+  waitMin: number;
   priority: 'routine' | 'urgent' | 'emergency';
-  aiRiskScore?: number;
-  vitalSigns?: {
-    temp: number;
-    bp: string;
-    pulse: number;
-  };
-  preVisitIntake?: boolean;
-  waitTime: number;
-  queuePosition: number;
+  aiRisk: number;
+  vitals?: { temp: number; bp: string; hr: number };
+  intakeDone: boolean;
 }
 
-interface Task {
-  id: string;
-  type: 'follow-up' | 'lab-result' | 'referral' | 'prescription';
-  patientName: string;
-  description: { sw: string; en: string };
-  dueDate: Date;
-  priority: 'high' | 'medium' | 'low';
-  completed: boolean;
-}
+type ChartTab = 'summary' | 'history' | 'admin';
 
-export function ClinicalDashboard({
-  language,
-  onLogout,
-  providerName,
-}: ClinicalDashboardProps) {
-  const [view, setView] = useState<'patients' | 'tasks' | 'analytics'>('patients');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterPriority, setFilterPriority] = useState<'all' | 'routine' | 'urgent' | 'emergency'>('all');
+const PRIORITY_META = {
+  emergency: { label: { sw: 'Dharura',     en: 'Emergency' }, color: '#dc2626', bg: '#fee2e2' },
+  urgent:    { label: { sw: 'Haraka',      en: 'Urgent'    }, color: '#d97706', bg: '#fef3c7' },
+  routine:   { label: { sw: 'Kawaida',     en: 'Routine'   }, color: '#0d9488', bg: '#ccfbf1' },
+};
 
-  const content = {
-    sw: {
-      title: 'Dashibodi ya Kliniki',
-      greeting: 'Habari',
-      tabs: {
-        patients: 'Wagonjwa',
-        tasks: 'Kazi',
-        analytics: 'Takwimu',
-      },
-      todayPatients: 'Wagonjwa wa Leo',
-      waitingRoom: 'Wanaosubiri',
-      completed: 'Waliokamilika',
-      upcoming: 'Wanaokuja',
-      search: 'Tafuta mgonjwa...',
-      filter: 'Chuja',
-      priority: {
-        all: 'Wote',
-        routine: 'Kawaida',
-        urgent: 'Dharura Kidogo',
-        emergency: 'Dharura',
-      },
-      viewDetails: 'Angalia Maelezo',
-      startConsult: 'Anza Ushauri',
-      aiRisk: 'Hatari ya AI',
-      preIntake: 'Maelezo ya Awali Yamejazwa',
-      waitTime: 'Muda wa Kusubiri',
-      minutes: 'dakika',
-      queuePos: 'Nafasi',
-      vitalSigns: 'Alama Muhimu',
-      temp: 'Joto',
-      bp: 'Shinikizo',
-      pulse: 'Mapigo ya Moyo',
-      stats: {
-        total: 'Jumla',
-        seen: 'Walioangaliwa',
-        waiting: 'Wanaosubiri',
-        avgWait: 'Wastani wa Kusubiri',
-      },
-      tasks: {
-        pending: 'Zinazosubiri',
-        overdue: 'Zimechelewa',
-        completed: 'Zimekamilika',
-      },
-      highPriority: 'Kipaumbele cha Juu',
-      mediumPriority: 'Kipaumbele cha Kati',
-      lowPriority: 'Kipaumbele cha Chini',
-      logout: 'Toka',
-    },
-    en: {
-      title: 'Clinical Dashboard',
-      greeting: 'Hello',
-      tabs: {
-        patients: 'Patients',
-        tasks: 'Tasks',
-        analytics: 'Analytics',
-      },
-      todayPatients: 'Today\'s Patients',
-      waitingRoom: 'Waiting Room',
-      completed: 'Completed',
-      upcoming: 'Upcoming',
-      search: 'Search patient...',
-      filter: 'Filter',
-      priority: {
-        all: 'All',
-        routine: 'Routine',
-        urgent: 'Urgent',
-        emergency: 'Emergency',
-      },
-      viewDetails: 'View Details',
-      startConsult: 'Start Consult',
-      aiRisk: 'AI Risk',
-      preIntake: 'Pre-visit Intake Completed',
-      waitTime: 'Wait Time',
-      minutes: 'minutes',
-      queuePos: 'Position',
-      vitalSigns: 'Vital Signs',
-      temp: 'Temp',
-      bp: 'BP',
-      pulse: 'Pulse',
-      stats: {
-        total: 'Total',
-        seen: 'Seen',
-        waiting: 'Waiting',
-        avgWait: 'Avg Wait',
-      },
-      tasks: {
-        pending: 'Pending',
-        overdue: 'Overdue',
-        completed: 'Completed',
-      },
-      highPriority: 'High Priority',
-      mediumPriority: 'Medium Priority',
-      lowPriority: 'Low Priority',
-      logout: 'Log Out',
-    },
-  };
+const RX_TEMPLATES = [
+  { id: 'malaria',  label: 'Malaria',     drugs: 'AL 80/480mg × 6 tabs (3 days)' },
+  { id: 'urti',    label: 'URTI',         drugs: 'Amoxicillin 500mg TDS × 5d + Paracetamol 1g PRN' },
+  { id: 'anc',     label: 'ANC',          drugs: 'FeSO4 200mg BD + Folic acid 5mg OD' },
+  { id: 'child',   label: 'Child < 5y',   drugs: 'Amoxicillin susp 250mg/5ml TDS × 5d' },
+  { id: 'refill',  label: 'Refill →',     drugs: '' },
+];
 
-  const t = content[language];
+const MOCK_PATIENTS: Patient[] = [
+  {
+    id: 'P001', name: 'Amina Hassan',      age: 32, gender: 'F', afyaId: 'AFY-103241',
+    complaint: { sw: 'Homa na maumivu ya kichwa', en: 'Fever & headache' },
+    arrivalTime: '08:30', waitMin: 45, priority: 'urgent', aiRisk: 75,
+    vitals: { temp: 38.5, bp: '130/85', hr: 92 }, intakeDone: true,
+  },
+  {
+    id: 'P002', name: 'John Mwangi',        age: 58, gender: 'M', afyaId: 'AFY-209817',
+    complaint: { sw: 'Maumivu ya kifua', en: 'Chest pain' },
+    arrivalTime: '08:45', waitMin: 30, priority: 'emergency', aiRisk: 92,
+    vitals: { temp: 37.2, bp: '158/98', hr: 108 }, intakeDone: true,
+  },
+  {
+    id: 'P003', name: 'Grace Kimani',       age: 28, gender: 'F', afyaId: 'AFY-334422',
+    complaint: { sw: 'Uchunguzi wa mimba', en: 'ANC visit' },
+    arrivalTime: '09:00', waitMin: 60, priority: 'routine', aiRisk: 18,
+    intakeDone: true,
+  },
+  {
+    id: 'P004', name: "David Ng'ang'a",     age: 45, gender: 'M', afyaId: 'AFY-441009',
+    complaint: { sw: 'Kikohozi cha wiki 2', en: 'Cough × 2 weeks' },
+    arrivalTime: '09:15', waitMin: 75, priority: 'urgent', aiRisk: 68,
+    vitals: { temp: 37.8, bp: '125/80', hr: 88 }, intakeDone: false,
+  },
+  {
+    id: 'P005', name: 'Fatuma Ali',         age: 65, gender: 'F', afyaId: 'AFY-559812',
+    complaint: { sw: 'Ufuatiliaji wa kisukari', en: 'Diabetes follow-up' },
+    arrivalTime: '09:30', waitMin: 90, priority: 'routine', aiRisk: 42,
+    intakeDone: true,
+  },
+];
 
-  // Mock patients
-  const mockPatients: Patient[] = [
-    {
-      id: '1',
-      name: 'Amina Hassan',
-      age: 32,
-      gender: 'F',
-      chiefComplaint: { sw: 'Homa na maumivu ya kichwa', en: 'Fever and headache' },
-      arrivalTime: '08:30',
-      priority: 'urgent',
-      aiRiskScore: 75,
-      vitalSigns: {
-        temp: 38.5,
-        bp: '130/85',
-        pulse: 92,
-      },
-      preVisitIntake: true,
-      waitTime: 45,
-      queuePosition: 1,
-    },
-    {
-      id: '2',
-      name: 'John Mwangi',
-      age: 58,
-      gender: 'M',
-      chiefComplaint: { sw: 'Maumivu ya kifua', en: 'Chest pain' },
-      arrivalTime: '08:45',
-      priority: 'emergency',
-      aiRiskScore: 92,
-      vitalSigns: {
-        temp: 37.2,
-        bp: '150/95',
-        pulse: 105,
-      },
-      preVisitIntake: true,
-      waitTime: 30,
-      queuePosition: 2,
-    },
-    {
-      id: '3',
-      name: 'Grace Kimani',
-      age: 28,
-      gender: 'F',
-      chiefComplaint: { sw: 'Uchunguzi wa mimba', en: 'Pregnancy checkup' },
-      arrivalTime: '09:00',
-      priority: 'routine',
-      aiRiskScore: 25,
-      preVisitIntake: true,
-      waitTime: 60,
-      queuePosition: 3,
-    },
-    {
-      id: '4',
-      name: 'David Ng\'ang\'a',
-      age: 45,
-      gender: 'M',
-      chiefComplaint: { sw: 'Kifua kikuu', en: 'Cough for 2 weeks' },
-      arrivalTime: '09:15',
-      priority: 'urgent',
-      aiRiskScore: 68,
-      vitalSigns: {
-        temp: 37.8,
-        bp: '125/80',
-        pulse: 88,
-      },
-      preVisitIntake: false,
-      waitTime: 75,
-      queuePosition: 4,
-    },
-    {
-      id: '5',
-      name: 'Fatuma Ali',
-      age: 65,
-      gender: 'F',
-      chiefComplaint: { sw: 'Ufuatiliaji wa kisukari', en: 'Diabetes follow-up' },
-      arrivalTime: '09:30',
-      priority: 'routine',
-      aiRiskScore: 45,
-      preVisitIntake: true,
-      waitTime: 90,
-      queuePosition: 5,
-    },
-  ];
+const AI_TIPS: Record<string, string> = {
+  P001: 'Malaria RDT suggested — fever + headache pattern. Consider AL if positive.',
+  P002: 'High cardiac risk (AI 92). Consider ECG before consultation.',
+  P003: 'ANC visit: check fundal height, BP, FHR. Iron + folic acid refill due.',
+  P004: 'TB screen warranted — 2-week cough + weight loss history. Order sputum AFB.',
+  P005: 'HbA1c last done 4 months ago. Recommend retest. Check foot exam.',
+};
 
-  // Mock tasks
-  const mockTasks: Task[] = [
-    {
-      id: '1',
-      type: 'lab-result',
-      patientName: 'Sarah Juma',
-      description: {
-        sw: 'Angalia matokeo ya vipimo vya damu',
-        en: 'Review blood test results',
-      },
-      dueDate: new Date(),
-      priority: 'high',
-      completed: false,
-    },
-    {
-      id: '2',
-      type: 'follow-up',
-      patientName: 'Peter Kamau',
-      description: {
-        sw: 'Piga simu kwa ufuatiliaji wa matibabu',
-        en: 'Call for treatment follow-up',
-      },
-      dueDate: new Date(),
-      priority: 'medium',
-      completed: false,
-    },
-    {
-      id: '3',
-      type: 'prescription',
-      patientName: 'Mary Wanjiku',
-      description: {
-        sw: 'Thibitisha dawa mpya',
-        en: 'Approve prescription renewal',
-      },
-      dueDate: new Date(Date.now() - 86400000),
-      priority: 'high',
-      completed: false,
-    },
-  ];
+const tr = {
+  sw: {
+    queue: 'Foleni ya Leo', search: 'Tafuta mgonjwa...', seen: 'Walioonwa', waiting: 'Wanaosubiri',
+    startVisit: 'Anza Ziara', complete: 'Kamilisha Ziara', prescribe: 'Andika Dawa',
+    summary: 'Muhtasari', history: 'Historia', admin: 'Utawala',
+    vitals: 'Alama Muhimu', complaint: 'Malalamiko', aiPanel: 'Ushauri wa AI',
+    rxTemplates: 'Templeti za Dawa', logout: 'Toka', mins: 'dak',
+    intakeDone: 'Maelezo yamejazwa', noIntake: 'Hakuna maelezo ya awali',
+    risk: 'Hatari',
+  },
+  en: {
+    queue: "Today's Queue", search: 'Search patient...', seen: 'Seen', waiting: 'Waiting',
+    startVisit: 'Start Visit', complete: 'Complete Visit', prescribe: 'Prescribe',
+    summary: 'Summary', history: 'History', admin: 'Admin',
+    vitals: 'Vital Signs', complaint: 'Chief Complaint', aiPanel: 'AI Guidance',
+    rxTemplates: 'Rx Templates', logout: 'Log Out', mins: 'min',
+    intakeDone: 'Pre-visit done', noIntake: 'No pre-visit intake',
+    risk: 'Risk',
+  },
+};
 
-  const filteredPatients =
-    filterPriority === 'all'
-      ? mockPatients
-      : mockPatients.filter((p) => p.priority === filterPriority);
+export function ClinicalDashboard({ language, onLogout, providerName }: ClinicalDashboardProps) {
+  const t = tr[language];
+  const [search, setSearch] = useState('');
+  const [activePatient, setActivePatient] = useState<Patient | null>(null);
+  const [chartTab, setChartTab] = useState<ChartTab>('summary');
+  const [aiOpen, setAiOpen] = useState(true);
+  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+  const [selectedRx, setSelectedRx] = useState<string | null>(null);
 
-  const waitingPatients = filteredPatients.filter((p) => p.queuePosition > 0);
-  const completedToday = 12;
-  const avgWaitTime = 42;
+  const filtered = MOCK_PATIENTS
+    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const order = { emergency: 0, urgent: 1, routine: 2 };
+      return order[a.priority] - order[b.priority];
+    });
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'emergency':
-        return { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA' };
-      case 'urgent':
-        return { bg: '#FFFBEB', text: '#F59E0B', border: '#FDE68A' };
-      case 'routine':
-        return { bg: '#ECFDF5', text: '#10B981', border: '#A7F3D0' };
-      default:
-        return { bg: '#F3F4F6', text: '#6B7280', border: '#E5E7EB' };
-    }
-  };
+  const seenCount  = seenIds.size;
+  const waitCount  = MOCK_PATIENTS.length - seenCount;
 
-  const getRiskColor = (score: number) => {
-    if (score >= 80) return { bg: '#FEF2F2', text: '#DC2626' };
-    if (score >= 60) return { bg: '#FFFBEB', text: '#F59E0B' };
-    return { bg: '#ECFDF5', text: '#10B981' };
-  };
+  /* ── Patient Chart View ── */
+  if (activePatient) {
+    const meta = PRIORITY_META[activePatient.priority];
+    const aiTip = AI_TIPS[activePatient.id] ?? '';
 
-  // Patients View
-  if (view === 'patients') {
     return (
-      <div className="min-h-screen bg-[#FAFBFC]">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#1E88E5] to-[#1565C0] text-white">
-          <div className="max-w-7xl mx-auto px-6 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-white/80 text-sm mb-1">
-                  {t.greeting}, {providerName}
-                </p>
-                <h1 className="text-3xl font-bold">{t.title}</h1>
-              </div>
-              <Button
-                onClick={onLogout}
-                variant="ghost"
-                className="text-white hover:bg-white/10"
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col">
+        {/* 80px Compact Header */}
+        <div
+          className="flex items-center gap-3 px-4 py-3 border-b border-slate-100"
+          style={{ background: '#0f172a', minHeight: 80 }}
+        >
+          <button
+            type="button"
+            aria-label={language === 'sw' ? 'Rudi kwenye orodha' : 'Back to queue'}
+            onClick={() => { setActivePatient(null); setChartTab('summary'); setSelectedRx(null); }}
+            className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white flex-shrink-0"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-white font-bold text-base truncate">{activePatient.name}</h1>
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                style={{ background: meta.bg, color: meta.color }}
               >
-                <LogOut className="w-5 h-5 mr-2" />
-                {t.logout}
-              </Button>
+                {meta.label[language]}
+              </span>
             </div>
+            <p className="text-white/60 text-xs mt-0.5">
+              {activePatient.age}y {activePatient.gender} · {activePatient.afyaId}
+              {activePatient.vitals && (
+                <> · {activePatient.vitals.temp}°C · {activePatient.vitals.bp} · HR {activePatient.vitals.hr}</>
+              )}
+            </p>
+          </div>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold text-white"
+            style={{ background: meta.color }}
+          >
+            {activePatient.aiRisk}
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white border-b border-[#E5E7EB]">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex gap-4">
-              {(['patients', 'tasks', 'analytics'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setView(tab)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    view === tab
-                      ? 'bg-[#1E88E5] text-white'
-                      : 'text-[#6B7280] hover:bg-[#F3F4F6]'
-                  }`}
-                >
-                  {t.tabs[tab]}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-              <div className="flex items-center gap-3">
-                <Users className="w-8 h-8 text-[#1E88E5]" />
-                <div>
-                  <p className="text-2xl font-bold text-[#1A1D23]">
-                    {mockPatients.length}
-                  </p>
-                  <p className="text-sm text-[#6B7280]">{t.stats.total}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-8 h-8 text-[#10B981]" />
-                <div>
-                  <p className="text-2xl font-bold text-[#1A1D23]">{completedToday}</p>
-                  <p className="text-sm text-[#6B7280]">{t.stats.seen}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-              <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8 text-[#F59E0B]" />
-                <div>
-                  <p className="text-2xl font-bold text-[#1A1D23]">
-                    {waitingPatients.length}
-                  </p>
-                  <p className="text-sm text-[#6B7280]">{t.stats.waiting}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="w-8 h-8 text-[#8B5CF6]" />
-                <div>
-                  <p className="text-2xl font-bold text-[#1A1D23]">
-                    {avgWaitTime}
-                    <span className="text-sm font-normal text-[#6B7280] ml-1">
-                      {t.minutes}
-                    </span>
-                  </p>
-                  <p className="text-sm text-[#6B7280]">{t.stats.avgWait}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Search and Filter */}
-          <div className="flex gap-3 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9CA3AF]" />
-              <input
-                type="text"
-                placeholder={t.search}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-12 pl-12 pr-4 bg-white border border-[#E5E7EB] rounded-xl text-[#1A1D23] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:border-transparent"
-              />
-            </div>
-            <div className="flex gap-2">
-              {(['all', 'routine', 'urgent', 'emergency'] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setFilterPriority(filter)}
-                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                    filterPriority === filter
-                      ? 'bg-[#1E88E5] text-white'
-                      : 'bg-white text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F3F4F6]'
-                  }`}
-                >
-                  {t.priority[filter]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Patient List */}
-          <div className="space-y-4">
-            {waitingPatients.map((patient, index) => {
-              const priorityColors = getPriorityColor(patient.priority);
-              const riskColors = patient.aiRiskScore
-                ? getRiskColor(patient.aiRiskScore)
-                : null;
-
-              return (
+        {/* 3-Tab Navigation */}
+        <div className="flex border-b border-slate-100 bg-white">
+          {(['summary', 'history', 'admin'] as ChartTab[]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setChartTab(tab)}
+              className={`flex-1 py-3 text-sm font-semibold transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488] focus-visible:ring-inset ${
+                chartTab === tab ? 'text-[#0d9488]' : 'text-gray-400'
+              }`}
+            >
+              {t[tab]}
+              {chartTab === tab && (
                 <motion.div
-                  key={patient.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="bg-white rounded-xl border border-[#E5E7EB] p-6 hover:shadow-lg transition-shadow"
-                >
-                  <div className="flex items-start gap-6">
-                    {/* Patient Avatar */}
-                    <div className="flex-shrink-0">
-                      <div className="w-16 h-16 bg-[#EFF6FF] rounded-full flex items-center justify-center">
-                        <User className="w-8 h-8 text-[#1E88E5]" />
-                      </div>
-                    </div>
+                  layoutId="chart-tab-indicator"
+                  className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-[#0d9488]"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
 
-                    {/* Patient Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-xl font-semibold text-[#1A1D23] mb-1">
-                            {patient.name}
-                          </h3>
-                          <p className="text-sm text-[#6B7280]">
-                            {patient.age}{' '}
-                            {language === 'sw'
-                              ? patient.gender === 'M'
-                                ? 'Mwanaume'
-                                : 'Mwanamke'
-                              : patient.gender === 'M'
-                              ? 'Male'
-                              : 'Female'}{' '}
-                            • {language === 'sw' ? 'Aliwasili' : 'Arrived'}{' '}
-                            {patient.arrivalTime}
-                          </p>
+        {/* Tab Content */}
+        <div className="flex-1 overflow-y-auto pb-36">
+          <AnimatePresence mode="wait">
+            {chartTab === 'summary' && (
+              <motion.div
+                key="summary"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="p-4 space-y-4"
+              >
+                {/* Chief Complaint */}
+                <div className="bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{t.complaint}</p>
+                  <p className="text-[#0f172a] font-semibold">{activePatient.complaint[language]}</p>
+                </div>
+
+                {/* Vitals */}
+                {activePatient.vitals && (
+                  <div className="bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{t.vitals}</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { label: 'Temp', value: `${activePatient.vitals.temp}°C`, ok: activePatient.vitals.temp < 37.5 },
+                        { label: 'BP',   value: activePatient.vitals.bp, ok: true },
+                        { label: 'HR',   value: `${activePatient.vitals.hr}`, ok: activePatient.vitals.hr < 100 },
+                      ].map((v) => (
+                        <div key={v.label} className="text-center p-3 rounded-xl" style={{ background: v.ok ? '#f0fdf4' : '#fee2e2' }}>
+                          <p className="text-xs text-gray-400 mb-1">{v.label}</p>
+                          <p className="font-bold text-[#0f172a] text-sm">{v.value}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="px-3 py-1.5 rounded-full"
-                            style={{
-                              backgroundColor: priorityColors.bg,
-                              borderColor: priorityColors.border,
-                              borderWidth: '1px',
-                            }}
-                          >
-                            <span
-                              className="text-xs font-semibold"
-                              style={{ color: priorityColors.text }}
-                            >
-                              {t.priority[patient.priority]}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Chief Complaint */}
-                      <div className="mb-4 p-3 bg-[#FAFBFC] rounded-lg">
-                        <p className="text-base text-[#1A1D23] font-medium">
-                          {patient.chiefComplaint[language]}
-                        </p>
-                      </div>
-
-                      {/* Stats Grid */}
-                      <div className="grid grid-cols-4 gap-3 mb-4">
-                        {/* Queue Position */}
-                        <div className="text-center p-3 bg-[#FAFBFC] rounded-lg">
-                          <p className="text-2xl font-bold text-[#1A1D23]">
-                            #{patient.queuePosition}
-                          </p>
-                          <p className="text-xs text-[#6B7280] mt-1">{t.queuePos}</p>
-                        </div>
-
-                        {/* Wait Time */}
-                        <div className="text-center p-3 bg-[#FAFBFC] rounded-lg">
-                          <p className="text-2xl font-bold text-[#1A1D23]">
-                            {patient.waitTime}
-                          </p>
-                          <p className="text-xs text-[#6B7280] mt-1">{t.minutes}</p>
-                        </div>
-
-                        {/* AI Risk Score */}
-                        {riskColors && patient.aiRiskScore && (
-                          <div
-                            className="text-center p-3 rounded-lg"
-                            style={{
-                              backgroundColor: riskColors.bg,
-                            }}
-                          >
-                            <p
-                              className="text-2xl font-bold"
-                              style={{ color: riskColors.text }}
-                            >
-                              {patient.aiRiskScore}
-                            </p>
-                            <p
-                              className="text-xs font-medium mt-1"
-                              style={{ color: riskColors.text }}
-                            >
-                              {t.aiRisk}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Pre-Intake Status */}
-                        {patient.preVisitIntake && (
-                          <div className="text-center p-3 bg-[#ECFDF5] rounded-lg">
-                            <CheckCircle className="w-6 h-6 text-[#10B981] mx-auto mb-1" />
-                            <p className="text-xs text-[#10B981] font-medium">
-                              {language === 'sw' ? 'Awali' : 'Pre-Intake'}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Vital Signs */}
-                      {patient.vitalSigns && (
-                        <div className="flex gap-4 mb-4 p-3 bg-[#EFF6FF] rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-[#1E88E5]" />
-                            <span className="text-sm text-[#1A1D23]">
-                              {t.temp}: {patient.vitalSigns.temp}°C
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-[#1E88E5]" />
-                            <span className="text-sm text-[#1A1D23]">
-                              {t.bp}: {patient.vitalSigns.bp}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-[#1E88E5]" />
-                            <span className="text-sm text-[#1A1D23]">
-                              {t.pulse}: {patient.vitalSigns.pulse} bpm
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex gap-3">
-                        <Button
-                          className="flex-1 bg-[#1E88E5] hover:bg-[#1976D2]"
-                          onClick={() =>
-                            alert(`Starting consultation with ${patient.name}`)
-                          }
-                        >
-                          <Stethoscope className="w-5 h-5 mr-2" />
-                          {t.startConsult}
-                        </Button>
-                        <Button variant="outline" className="flex-1">
-                          <FileText className="w-5 h-5 mr-2" />
-                          {t.viewDetails}
-                        </Button>
-                      </div>
+                      ))}
                     </div>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
+                )}
 
-  // Tasks View
-  if (view === 'tasks') {
-    const pendingTasks = mockTasks.filter((t) => !t.completed);
-    const overdueTasks = mockTasks.filter(
-      (t) => !t.completed && t.dueDate < new Date()
-    );
-
-    return (
-      <div className="min-h-screen bg-[#FAFBFC]">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#1E88E5] to-[#1565C0] text-white">
-          <div className="max-w-7xl mx-auto px-6 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-white/80 text-sm mb-1">
-                  {t.greeting}, {providerName}
-                </p>
-                <h1 className="text-3xl font-bold">{t.title}</h1>
-              </div>
-              <Button
-                onClick={onLogout}
-                variant="ghost"
-                className="text-white hover:bg-white/10"
-              >
-                <LogOut className="w-5 h-5 mr-2" />
-                {t.logout}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-white border-b border-[#E5E7EB]">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex gap-4">
-              {(['patients', 'tasks', 'analytics'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setView(tab)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    view === tab
-                      ? 'bg-[#1E88E5] text-white'
-                      : 'text-[#6B7280] hover:bg-[#F3F4F6]'
-                  }`}
-                >
-                  {t.tabs[tab]}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Tasks Content */}
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-              <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8 text-[#F59E0B]" />
-                <div>
-                  <p className="text-2xl font-bold text-[#1A1D23]">
-                    {pendingTasks.length}
-                  </p>
-                  <p className="text-sm text-[#6B7280]">{t.tasks.pending}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-8 h-8 text-[#EF4444]" />
-                <div>
-                  <p className="text-2xl font-bold text-[#1A1D23]">
-                    {overdueTasks.length}
-                  </p>
-                  <p className="text-sm text-[#6B7280]">{t.tasks.overdue}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-8 h-8 text-[#10B981]" />
-                <div>
-                  <p className="text-2xl font-bold text-[#1A1D23]">24</p>
-                  <p className="text-sm text-[#6B7280]">{t.tasks.completed}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Task List */}
-          <div className="space-y-4">
-            {mockTasks.map((task, index) => (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl border border-[#E5E7EB] p-6"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-[#1A1D23] mb-1">
-                      {task.patientName}
-                    </h3>
-                    <p className="text-[#6B7280] mb-3">{task.description[language]}</p>
-                    <div className="flex items-center gap-4 text-sm text-[#6B7280]">
-                      <span>{task.dueDate.toLocaleDateString()}</span>
-                      <span
-                        className={`px-2 py-1 rounded ${
-                          task.priority === 'high'
-                            ? 'bg-[#FEF2F2] text-[#EF4444]'
-                            : task.priority === 'medium'
-                            ? 'bg-[#FFFBEB] text-[#F59E0B]'
-                            : 'bg-[#ECFDF5] text-[#10B981]'
-                        }`}
+                {/* AI Guidance Panel */}
+                <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setAiOpen((o) => !o)}
+                    className="w-full flex items-center justify-between p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488] focus-visible:ring-inset"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-[#0d9488]" />
+                      <span className="text-sm font-semibold text-[#0f172a]">{t.aiPanel}</span>
+                    </div>
+                    {aiOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                  </button>
+                  <AnimatePresence>
+                    {aiOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
                       >
-                        {task.priority === 'high'
-                          ? t.highPriority
-                          : task.priority === 'medium'
-                          ? t.mediumPriority
-                          : t.lowPriority}
+                        <div className="px-4 pb-4 border-t border-[#ccfbf1]">
+                          <p className="text-sm text-gray-600 mt-3 leading-relaxed">{aiTip}</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Rx Templates */}
+                <div className="bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{t.rxTemplates}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {RX_TEMPLATES.map((rx) => (
+                      <button
+                        key={rx.id}
+                        type="button"
+                        onClick={() => setSelectedRx(selectedRx === rx.id ? null : rx.id)}
+                        className="px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488]"
+                        style={{
+                          background: selectedRx === rx.id ? '#0d9488' : '#f8fafc',
+                          color: selectedRx === rx.id ? '#ffffff' : '#0d9488',
+                          borderColor: '#0d9488',
+                        }}
+                      >
+                        {rx.label}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedRx && RX_TEMPLATES.find((r) => r.id === selectedRx)?.drugs && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-3 p-3 rounded-xl bg-[#ccfbf1]"
+                    >
+                      <p className="text-xs font-mono text-[#0f766e]">
+                        {RX_TEMPLATES.find((r) => r.id === selectedRx)?.drugs}
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {chartTab === 'history' && (
+              <motion.div
+                key="history"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="p-4 space-y-3"
+              >
+                {[
+                  { date: '2026-03-15', dx: 'Malaria (confirmed)', rx: 'AL completed', outcome: 'Recovered' },
+                  { date: '2026-01-08', dx: 'URTI', rx: 'Amoxicillin 5d', outcome: 'Resolved' },
+                  { date: '2025-11-22', dx: 'ANC visit 28w', rx: 'Iron + Folic refill', outcome: 'Normal' },
+                ].map((visit) => (
+                  <div key={visit.date} className="bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">{visit.date}</p>
+                        <p className="text-[#0f172a] font-semibold text-sm">{visit.dx}</p>
+                        <p className="text-gray-500 text-xs mt-1">{visit.rx}</p>
+                      </div>
+                      <span className="text-xs font-semibold text-[#16a34a] bg-[#dcfce7] px-2 py-0.5 rounded-full flex-shrink-0">
+                        {visit.outcome}
                       </span>
                     </div>
                   </div>
-                  <Button variant="outline">
-                    {language === 'sw' ? 'Angalia' : 'View'}
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
+                ))}
+              </motion.div>
+            )}
+
+            {chartTab === 'admin' && (
+              <motion.div
+                key="admin"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="p-4 space-y-4"
+              >
+                <div className="bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)] space-y-3">
+                  {[
+                    { label: 'Insurance', value: 'NHIF — Active' },
+                    { label: 'Facility', value: 'Muhimbili National Hospital' },
+                    { label: 'Ward', value: 'OPD Block A' },
+                    { label: 'Referral', value: 'None' },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
+                      <span className="text-xs text-gray-400">{row.label}</span>
+                      <span className="text-sm font-semibold text-[#0f172a]">{row.value}</span>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
-            ))}
-          </div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Pinned Action Bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 flex gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setSeenIds((prev) => new Set([...prev, activePatient.id]));
+              setActivePatient(null);
+            }}
+            className="flex-1 h-12 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}
+          >
+            <CheckCircle2 size={16} />
+            {t.complete}
+          </button>
+          <button
+            type="button"
+            onClick={() => setChartTab('summary')}
+            className="h-12 px-4 rounded-xl font-bold text-sm border-2 border-[#0d9488] text-[#0d9488] flex items-center justify-center gap-2"
+          >
+            <Pill size={16} />
+            {t.prescribe}
+          </button>
         </div>
       </div>
     );
   }
 
-  return null;
+  /* ── Patient Queue View ── */
+  return (
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col">
+      {/* Top Bar */}
+      <div className="px-4 pt-12 pb-5" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #134e4a 55%, #0d9488 100%)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-white font-black text-xl">{t.queue}</h1>
+            <p className="text-white/60 text-xs mt-0.5">Dr. {providerName}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+              <Bell size={18} className="text-white" />
+            </button>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center"
+              aria-label={t.logout}
+            >
+              <LogOut size={18} className="text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* Stats strip */}
+        <div className="flex gap-3">
+          {[
+            { label: t.seen,    value: seenCount,    color: '#ccfbf1',  text: '#0f766e' },
+            { label: t.waiting, value: waitCount,    color: '#fef3c7',  text: '#92400e' },
+            { label: 'Total',   value: MOCK_PATIENTS.length, color: 'rgba(255,255,255,0.15)', text: '#fff' },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="flex-1 rounded-xl p-2.5 text-center"
+              style={{ background: s.color }}
+            >
+              <p className="text-xl font-black" style={{ color: s.text }}>{s.value}</p>
+              <p className="text-xs font-semibold" style={{ color: s.text, opacity: 0.8 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="px-4 py-3 bg-white border-b border-slate-100">
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="search"
+            placeholder={t.search}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-10 pl-9 pr-4 rounded-xl bg-[#f8fafc] text-sm text-[#0f172a] placeholder-gray-400 border border-slate-100 focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
+          />
+        </div>
+      </div>
+
+      {/* Patient Queue */}
+      <div className="flex-1 overflow-y-auto pb-6 px-4 pt-4 space-y-3">
+        {filtered.map((patient, i) => {
+          const meta = PRIORITY_META[patient.priority];
+          const isSeen = seenIds.has(patient.id);
+          return (
+            <motion.button
+              key={patient.id}
+              type="button"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: i * 0.04 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => { setActivePatient(patient); setChartTab('summary'); }}
+              className={`w-full text-left bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.06)] border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488] ${
+                isSeen ? 'opacity-50 border-transparent' : 'border-transparent hover:border-[#0d9488]'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white"
+                  style={{ background: meta.color }}
+                >
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-bold text-[#0f172a] text-sm truncate">{patient.name}</p>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: meta.bg, color: meta.color }}
+                      >
+                        {meta.label[language]}
+                      </span>
+                      {isSeen && (
+                        <CheckCircle2 size={14} className="text-[#16a34a]" />
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-gray-500 text-xs mt-0.5 truncate">{patient.complaint[language]}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                      <Clock size={11} />
+                      {patient.waitMin}{t.mins}
+                    </span>
+                    <span className="text-[11px] text-gray-400">{patient.age}y {patient.gender}</span>
+                    {patient.intakeDone ? (
+                      <span className="text-[11px] text-[#0d9488] font-semibold">{t.intakeDone}</span>
+                    ) : (
+                      <span className="text-[11px] text-[#d97706]">{t.noIntake}</span>
+                    )}
+                    <span
+                      className="text-[11px] font-bold ml-auto"
+                      style={{ color: patient.aiRisk >= 75 ? '#dc2626' : patient.aiRisk >= 50 ? '#d97706' : '#16a34a' }}
+                    >
+                      AI {patient.aiRisk}
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-gray-300 flex-shrink-0 mt-1" />
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
