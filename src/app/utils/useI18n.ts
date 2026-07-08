@@ -7,7 +7,7 @@
 import { useTranslation } from 'react-i18next';
 import { useMemo, useCallback } from 'react';
 import { getMedicalTerm } from './medicalTerms';
-import type { Language } from '../context/AppContext';
+import type { Language } from '../store/useAppStore';
 
 /**
  * Enhanced translation hook with medical term support

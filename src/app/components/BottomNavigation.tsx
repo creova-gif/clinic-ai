@@ -1,7 +1,7 @@
 import React from 'react';
 import { Home, Pill, Calendar, User, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 const translations = {
   sw: { home: 'Nyumbani', medications: 'Dawa', ai: 'AI', appointments: 'Miadi', profile: 'Mimi' },
@@ -24,7 +24,7 @@ const RIGHT_TABS = [
 ];
 
 export function BottomNavigation({ activeRoute, onNavigate }: BottomNavigationProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language as keyof typeof translations] ?? translations.sw;
   const isAIActive = activeRoute === 'ai-chat';
 

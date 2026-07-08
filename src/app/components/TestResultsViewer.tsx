@@ -40,6 +40,7 @@ interface TestResult {
 }
 
 export function TestResultsViewer({ language, onBack }: TestResultsViewerProps) {
+  const t = (k: string) => k;
   const [selectedResult, setSelectedResult] = useState<TestResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [testResults, setTestResults] = useState<ApiTestResult[]>([]);
@@ -383,12 +384,7 @@ export function TestResultsViewer({ language, onBack }: TestResultsViewerProps) 
               />
               
               <MedicalCard 
-                style={{ 
-                  background: `linear-gradient(135deg, ${colors.danger[50]} 0%, ${colors.danger[100]} 100%)`,
-                  borderColor: colors.danger[300],
-                  borderWidth: '2px'
-                }}
-                className="relative"
+                className="relative dynamic-style"
               >
                 <div className="flex items-start gap-4">
                   {/* Pulsing Alert Icon */}
@@ -491,7 +487,7 @@ export function TestResultsViewer({ language, onBack }: TestResultsViewerProps) 
           </div>
 
           {/* CSS Animation */}
-          <style jsx>{`
+          <style>{`
             @keyframes shine {
               0% { transform: translateX(-100%); }
               100% { transform: translateX(100%); }

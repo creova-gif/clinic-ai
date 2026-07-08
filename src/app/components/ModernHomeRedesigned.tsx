@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { HealthScoreRing } from './ui/HealthScoreRing';
 import { ConfettiCelebration } from './ui/ConfettiCelebration';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 // ─────────────────────────────────────────────
 // Types
@@ -233,7 +233,7 @@ export function ModernHome({
   medicationStatus = 'pending',
   aiTip,
 }: ModernHomeProps) {
-  const { language: ctxLang, isOffline } = useApp();
+  const { language: ctxLang, isOffline } = useAppStore();
   const lang = (language ?? ctxLang ?? 'sw') as 'sw' | 'en';
   const tr = T[lang];
 

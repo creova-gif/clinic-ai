@@ -42,7 +42,7 @@ interface ApiResponse<T> {
 }
 
 // Helper: Create API response
-function createResponse<T>(data: T | null, error: Error | null = null): ApiResponse<T> {
+function createResponse<T = any>(data: any = null, error: Error | null = null): ApiResponse<T> {
   return {
     data,
     error,
@@ -66,7 +66,7 @@ async function logAudit(action: string, resourceType: string, resourceId?: strin
   }
 
   try {
-    await supabase.from('audit_logs').insert(auditData);
+    await (supabase as any).from('audit_logs').insert(auditData);
   } catch (error) {
     console.error('Failed to log audit:', error);
   }
@@ -364,7 +364,7 @@ const medications = {
         return createResponse(null);
       }
 
-      const { error } = await supabase.from('medications').update({ active: false }).eq('id', id);
+      const { error } = await (supabase as any).from('medications').update({ active: false }).eq('id', id);
 
       if (error) throw error;
 
@@ -509,7 +509,7 @@ const symptomAssessments = {
         return createResponse(null);
       }
 
-      const { error } = await supabase.from('symptom_assessments').insert(assessment);
+      const { error } = await (supabase as any).from('symptom_assessments').insert(assessment);
 
       if (error) throw error;
 

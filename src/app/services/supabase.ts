@@ -20,14 +20,14 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Singleton instance to prevent multiple clients
-let supabaseInstance: ReturnType<typeof createClient> | null = null;
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
 function getSupabaseClient() {
   if (supabaseInstance) {
     return supabaseInstance;
   }
 
-  supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
@@ -50,95 +50,151 @@ function getSupabaseClient() {
 export const supabase = getSupabaseClient();
 
 // Database Types
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       appointments: {
-        Row: Appointment;
-        Insert: AppointmentInsert;
-        Update: AppointmentUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       medications: {
-        Row: Medication;
-        Insert: MedicationInsert;
-        Update: MedicationUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       test_results: {
-        Row: TestResult;
-        Insert: TestResultInsert;
-        Update: TestResultUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       facilities: {
-        Row: Facility;
-        Insert: FacilityInsert;
-        Update: FacilityUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       symptom_assessments: {
-        Row: SymptomAssessment;
-        Insert: SymptomAssessmentInsert;
-        Update: SymptomAssessmentUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       maternal_care: {
-        Row: MaternalCare;
-        Insert: MaternalCareInsert;
-        Update: MaternalCareUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       offline_queue: {
-        Row: OfflineQueueItem;
-        Insert: OfflineQueueInsert;
-        Update: OfflineQueueUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       audit_logs: {
-        Row: AuditLog;
-        Insert: AuditLogInsert;
-        Update: AuditLogUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       wellness_profiles: {
-        Row: WellnessProfile;
-        Insert: WellnessProfileInsert;
-        Update: WellnessProfileUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       wellness_meals: {
-        Row: WellnessMeal;
-        Insert: WellnessMealInsert;
-        Update: WellnessMealUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       wellness_workouts: {
-        Row: WellnessWorkout;
-        Insert: WellnessWorkoutInsert;
-        Update: WellnessWorkoutUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       wellness_habits: {
-        Row: WellnessHabit;
-        Insert: WellnessHabitInsert;
-        Update: WellnessHabitUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       patient_queue: {
-        Row: PatientQueue;
-        Insert: PatientQueueInsert;
-        Update: PatientQueueUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       clinical_notes: {
-        Row: ClinicalNote;
-        Insert: ClinicalNoteInsert;
-        Update: ClinicalNoteUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       lab_orders: {
-        Row: LabOrder;
-        Insert: LabOrderInsert;
-        Update: LabOrderUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
       medication_dispense: {
-        Row: MedicationDispense;
-        Insert: MedicationDispenseInsert;
-        Update: MedicationDispenseUpdate;
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
+      drug_inventory: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
+      stock_movements: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
+      purchase_orders: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
+      prescriptions: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
+      chw_profiles: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
+      chw_dispatch_tasks: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
 
 // Type Definitions
-export interface Appointment {
+export type Appointment = {
   id: string;
   user_id: string;
   facility_id: string;
@@ -156,7 +212,7 @@ export interface Appointment {
 export type AppointmentInsert = Omit<Appointment, 'id' | 'created_at' | 'updated_at'>;
 export type AppointmentUpdate = Partial<AppointmentInsert>;
 
-export interface Medication {
+export type Medication = {
   id: string;
   user_id: string;
   name: string;
@@ -174,7 +230,7 @@ export interface Medication {
 export type MedicationInsert = Omit<Medication, 'id' | 'created_at' | 'updated_at'>;
 export type MedicationUpdate = Partial<MedicationInsert>;
 
-export interface TestResult {
+export type TestResult = {
   id: string;
   user_id: string;
   facility_id: string;
@@ -191,7 +247,7 @@ export interface TestResult {
 export type TestResultInsert = Omit<TestResult, 'id' | 'created_at' | 'updated_at'>;
 export type TestResultUpdate = Partial<TestResultInsert>;
 
-export interface Facility {
+export type Facility = {
   id: string;
   name: string;
   name_sw: string;
@@ -215,7 +271,7 @@ export interface Facility {
 export type FacilityInsert = Omit<Facility, 'id' | 'created_at' | 'updated_at'>;
 export type FacilityUpdate = Partial<FacilityInsert>;
 
-export interface SymptomAssessment {
+export type SymptomAssessment = {
   id: string;
   user_id?: string;
   session_id: string;
@@ -228,7 +284,7 @@ export interface SymptomAssessment {
 export type SymptomAssessmentInsert = Omit<SymptomAssessment, 'id' | 'created_at'>;
 export type SymptomAssessmentUpdate = Partial<SymptomAssessmentInsert>;
 
-export interface MaternalCare {
+export type MaternalCare = {
   id: string;
   user_id: string;
   pregnancy_start_date: string;
@@ -246,7 +302,7 @@ export interface MaternalCare {
 export type MaternalCareInsert = Omit<MaternalCare, 'id' | 'created_at' | 'updated_at'>;
 export type MaternalCareUpdate = Partial<MaternalCareInsert>;
 
-export interface OfflineQueueItem {
+export type OfflineQueueItem = {
   id: string;
   operation: 'create' | 'update' | 'delete';
   table: string;
@@ -261,7 +317,7 @@ export interface OfflineQueueItem {
 export type OfflineQueueInsert = Omit<OfflineQueueItem, 'id' | 'created_at' | 'synced_at'>;
 export type OfflineQueueUpdate = Partial<OfflineQueueInsert>;
 
-export interface AuditLog {
+export type AuditLog = {
   id: string;
   user_id?: string;
   action: string;
@@ -276,17 +332,20 @@ export interface AuditLog {
 export type AuditLogInsert = Omit<AuditLog, 'id' | 'created_at'>;
 export type AuditLogUpdate = Partial<AuditLogInsert>;
 
-export interface WellnessProfile {
+export type WellnessProfile = {
   id: string;
   user_id: string;
+  name: string;
   age: number;
-  gender: 'male' | 'female' | 'other';
-  height: number;
-  weight: number;
-  blood_type: string;
-  allergies: string[];
-  medical_conditions: string[];
-  medications: string[];
+  weight?: number; // kg
+  height?: number; // cm
+  goals: string[];
+  activity_level: number; // 0-3
+  language: 'sw' | 'en';
+  daily_calorie_target: number;
+  profile_type: 'adult' | 'child' | 'elder';
+  relationship?: string; // child, parent, partner, elder
+  is_primary: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -294,51 +353,53 @@ export interface WellnessProfile {
 export type WellnessProfileInsert = Omit<WellnessProfile, 'id' | 'created_at' | 'updated_at'>;
 export type WellnessProfileUpdate = Partial<WellnessProfileInsert>;
 
-export interface WellnessMeal {
+export type WellnessMeal = {
   id: string;
-  user_id: string;
-  meal_name: string;
+  profile_id: string;
+  date: string;
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-  ingredients: string[];
-  instructions: string;
-  calories: number;
+  foods: Array<{
+    name: string;
+    portion: string;
+    calories: number;
+  }>;
+  total_calories: number;
+  notes?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export type WellnessMealInsert = Omit<WellnessMeal, 'id' | 'created_at' | 'updated_at'>;
 export type WellnessMealUpdate = Partial<WellnessMealInsert>;
 
-export interface WellnessWorkout {
+export type WellnessWorkout = {
   id: string;
-  user_id: string;
-  workout_name: string;
-  workout_type: 'cardio' | 'strength' | 'flexibility';
+  profile_id: string;
+  date: string;
+  activity_type: string;
   duration_minutes: number;
   intensity: 'low' | 'medium' | 'high';
-  description: string;
+  calories_burned?: number;
+  notes?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export type WellnessWorkoutInsert = Omit<WellnessWorkout, 'id' | 'created_at' | 'updated_at'>;
 export type WellnessWorkoutUpdate = Partial<WellnessWorkoutInsert>;
 
-export interface WellnessHabit {
+export type WellnessHabit = {
   id: string;
-  user_id: string;
-  habit_name: string;
-  habit_type: 'daily' | 'weekly' | 'monthly';
-  frequency: number;
-  description: string;
+  profile_id: string;
+  date: string; // YYYY-MM-DD
+  water_glasses: number;
+  sleep_hours: number;
+  steps: number;
   created_at: string;
-  updated_at: string;
 }
 
 export type WellnessHabitInsert = Omit<WellnessHabit, 'id' | 'created_at' | 'updated_at'>;
 export type WellnessHabitUpdate = Partial<WellnessHabitInsert>;
 
-export interface PatientQueue {
+export type PatientQueue = {
   id: string;
   user_id: string;
   facility_id: string;
@@ -356,17 +417,17 @@ export interface PatientQueue {
 export type PatientQueueInsert = Omit<PatientQueue, 'id' | 'created_at' | 'updated_at'>;
 export type PatientQueueUpdate = Partial<PatientQueueInsert>;
 
-export interface ClinicalNote {
+export type ClinicalNote = {
   id: string;
-  user_id: string;
-  facility_id: string;
-  date: string;
-  time: string;
-  type: string;
-  status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed';
-  reason?: string;
-  notes?: string;
-  has_insurance: boolean;
+  queue_id: string;
+  clinician_id: string;
+  subjective: string; // S
+  objective: string; // O
+  assessment: string; // A
+  plan: string; // P
+  icd10_codes: string[];
+  signed: boolean;
+  signed_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -374,47 +435,62 @@ export interface ClinicalNote {
 export type ClinicalNoteInsert = Omit<ClinicalNote, 'id' | 'created_at' | 'updated_at'>;
 export type ClinicalNoteUpdate = Partial<ClinicalNoteInsert>;
 
-export interface LabOrder {
+export type LabOrder = {
   id: string;
-  user_id: string;
-  facility_id: string;
+  queue_id: string;
   test_type: string;
-  test_date: string;
-  results: any; // JSON field
-  status: 'pending' | 'completed' | 'reviewed';
-  reviewed_by?: string;
-  reviewed_at?: string;
+  priority: 'Routine' | 'Urgent' | 'STAT';
+  status: 'Ordered' | 'Processing' | 'Completed' | 'Cancelled';
+  results?: any;
+  ordered_by: string;
+  ordered_at: string;
+  completed_at?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export type LabOrderInsert = Omit<LabOrder, 'id' | 'created_at' | 'updated_at'>;
 export type LabOrderUpdate = Partial<LabOrderInsert>;
 
-export interface MedicationDispense {
+export type MedicationDispense = {
   id: string;
-  user_id: string;
-  name: string;
+  queue_id: string;
+  drug_name: string;
   dosage: string;
-  frequency: string;
-  start_date: string;
-  end_date?: string;
-  reminder_times: string[];
-  notes?: string;
-  active: boolean;
+  status: 'Verify' | 'Ready' | 'Dispensed' | 'Cancelled';
+  prescribed_by: string;
+  dispensed_by?: string;
+  dispensed_at?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export type MedicationDispenseInsert = Omit<MedicationDispense, 'id' | 'created_at' | 'updated_at'>;
 export type MedicationDispenseUpdate = Partial<MedicationDispenseInsert>;
 
 // Helper function to check if Supabase is configured
-export function isSupabaseConfigured(): boolean {
-  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+export type DrugInventory = {
+  id: string;
+  drug_name: string;
+  generic_name: string;
+  brand_name?: string;
+  category: string; // Antibiotics, Analgesics, Antimalarials, etc.
+  dosage_form: string; // Tablet, Syrup, Injection, etc.
+  strength: string; // e.g., "500mg", "250mg/5ml"
+  quantity: number;
+  unit: string; // tablets, bottles, vials, etc.
+  reorder_level: number; // Alert when below this
+  batch_number: string;
+  expiry_date: string;
+  cost_per_unit: number;
+  selling_price: number;
+  supplier: string;
+  location: string; // Shelf/bin location
+  created_at: string;
+  updated_at: string;
 }
 
 // Mock mode check — true when no env vars are set
+export function isSupabaseConfigured() { return !!import.meta.env.VITE_SUPABASE_URL; }
 export const USE_MOCK_DATA = !isSupabaseConfigured();
 
 if (USE_MOCK_DATA) {

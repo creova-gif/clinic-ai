@@ -1,0 +1,1 @@
+import{U as a,s}from"./api-6bA3PGLN.js";const u="mock_user_001";async function n(){var r;if(a)return u;try{const{data:{session:t}}=await s.auth.getSession();return((r=t==null?void 0:t.user)==null?void 0:r.id)??null}catch{return null}}export{n as g};

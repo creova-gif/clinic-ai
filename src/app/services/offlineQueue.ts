@@ -196,16 +196,16 @@ class OfflineQueueManager {
       let result;
       switch (operation.operation) {
         case 'create':
-          result = await supabase.from(operation.table).insert(operation.data);
+          result = await (supabase as any).from(operation.table).insert(operation.data);
           break;
 
         case 'update':
           const { id, ...updateData } = operation.data;
-          result = await supabase.from(operation.table).update(updateData).eq('id', id);
+          result = await (supabase as any).from(operation.table).update(updateData).eq('id', id);
           break;
 
         case 'delete':
-          result = await supabase.from(operation.table).delete().eq('id', operation.data.id);
+          result = await (supabase as any).from(operation.table).delete().eq('id', operation.data.id);
           break;
 
         default:

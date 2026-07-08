@@ -6,7 +6,7 @@ import { Badge } from '@/app/components/ui/badge';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { Checkbox } from '@/app/components/ui/checkbox';
 import { Label } from '@/app/components/ui/label';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 const translations = {
   sw: {
@@ -52,7 +52,7 @@ const translations = {
 };
 
 export function OnboardingScreen() {
-  const { language, setUserRole } = useApp();
+  const { language, setUserRole } = useAppStore();
   const t = translations[language];
   const [hasConsented, setHasConsented] = useState(false);
   const [showConsentError, setShowConsentError] = useState(false);

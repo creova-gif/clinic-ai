@@ -56,7 +56,7 @@ export function MedicalCard({
   const variantStyles = {
     default: {
       backgroundColor: '#FFFFFF',
-      border: `1px solid ${colors.neutral[300]}`,
+      border: `1px solid ${colors.primary[500]}`,
       boxShadow: 'none',
     },
     elevated: {
@@ -66,7 +66,7 @@ export function MedicalCard({
     },
     bordered: {
       backgroundColor: '#FFFFFF',
-      border: `2px solid ${colors.neutral[300]}`,
+      border: `2px solid ${colors.primary[500]}`,
       boxShadow: 'none',
     },
     flat: {
@@ -86,7 +86,7 @@ export function MedicalCard({
   };
 
   const interactiveHoverStyle: React.CSSProperties = {
-    borderColor: colors.primary[300],
+    borderColor: colors.primary[500],
     boxShadow: shadows.md,
     transform: 'translateY(-1px)', // Subtle lift
   };

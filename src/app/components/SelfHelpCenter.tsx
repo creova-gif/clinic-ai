@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface SelfHelpCenterProps {
@@ -124,7 +124,7 @@ const translations = {
 };
 
 export function SelfHelpCenter({ isOpen, onClose }: SelfHelpCenterProps) {
-  const { language, isOffline } = useApp();
+  const { language, isOffline } = useAppStore();
   const t = translations[language];
   
   const [searchQuery, setSearchQuery] = useState('');

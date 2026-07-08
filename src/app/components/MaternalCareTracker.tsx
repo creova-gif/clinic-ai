@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 const translations = {
   sw: {
@@ -56,7 +56,7 @@ interface MaternalCareTrackerProps {
 }
 
 export function MaternalCareTracker({ onBack }: MaternalCareTrackerProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
 
   // Mock data

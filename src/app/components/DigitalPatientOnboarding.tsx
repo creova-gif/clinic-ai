@@ -16,7 +16,8 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Progress } from '@/app/components/ui/progress';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
+import { SecureStorage } from '@/app/utils/SecureStorage';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface DigitalPatientOnboardingProps {
@@ -94,7 +95,7 @@ const translations = {
     talkToDoctor: 'Zungumza na daktari',
     
     // Progress
-    complete: 'Imekamilika',
+    progressComplete: 'Imekamilika',
     inProgress: 'Inaendelea',
     pending: 'Inasubiri',
     
@@ -155,7 +156,7 @@ const translations = {
     talkToDoctor: 'Talk to doctor',
     
     // Progress
-    complete: 'Complete',
+    progressComplete: 'Complete',
     inProgress: 'In Progress',
     pending: 'Pending',
     
@@ -173,7 +174,7 @@ const translations = {
 };
 
 export function DigitalPatientOnboarding({ onComplete, onClose }: DigitalPatientOnboardingProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
   
   const [currentStep, setCurrentStep] = useState(1);
@@ -202,20 +203,20 @@ export function DigitalPatientOnboarding({ onComplete, onClose }: DigitalPatient
     nhifStatus: '',
   });
 
-  // Auto-save to localStorage
+  // Auto-save securely
   useEffect(() => {
     const timer = setTimeout(() => {
-      localStorage.setItem('patient_onboarding_draft', JSON.stringify(formData));
+      SecureStorage.setItem('patient_onboarding_draft', formData);
     }, 1000);
     return () => clearTimeout(timer);
   }, [formData]);
 
-  // Load saved draft
+  // Load saved draft securely
   useEffect(() => {
-    const saved = localStorage.getItem('patient_onboarding_draft');
+    const saved = SecureStorage.getItem<PatientOnboardingData>('patient_onboarding_draft');
     if (saved) {
       try {
-        setFormData(JSON.parse(saved));
+        setFormData(saved);
       } catch (e) {
       }
     }
@@ -227,8 +228,8 @@ export function DigitalPatientOnboarding({ onComplete, onClose }: DigitalPatient
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Clear draft and complete
-      localStorage.removeItem('patient_onboarding_draft');
+      // Clear secure draft and complete
+      SecureStorage.removeItem('patient_onboarding_draft');
       onComplete(formData);
     }
   };

@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useAppStore } from '../store/useAppStore';
 import {
   ChevronLeft,
   AlertTriangle,
@@ -155,7 +155,7 @@ interface EnhancedSymptomCheckerProps {
 }
 
 export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<SymptomAnswer[]>([]);

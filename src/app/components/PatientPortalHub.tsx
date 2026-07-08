@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 interface PatientPortalHubProps {
   onNavigate: (route: string) => void;
@@ -88,7 +88,7 @@ const translations = {
 };
 
 export function PatientPortalHub({ onNavigate, onClose }: PatientPortalHubProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
 
   // Mock data - in production this would come from backend

@@ -77,19 +77,19 @@ export function NativeDropdownFilter({
           minHeight: accessibility.minTouchTarget,
         }}
         onFocus={(e) => {
-          e.target.style.borderColor = colors.primary[500];
+          (e.target as HTMLElement).style.borderColor = colors.primary[500];
         }}
         onBlur={(e) => {
-          e.target.style.borderColor = colors.neutral[300];
+          (e.target as HTMLElement).style.borderColor = colors.neutral[300];
         }}
         onMouseEnter={(e) => {
           if (document.activeElement !== e.target) {
-            e.target.style.borderColor = colors.neutral[400];
+            (e.target as HTMLElement).style.borderColor = colors.neutral[400];
           }
         }}
         onMouseLeave={(e) => {
           if (document.activeElement !== e.target) {
-            e.target.style.borderColor = colors.neutral[300];
+            (e.target as HTMLElement).style.borderColor = colors.neutral[300];
           }
         }}
       >

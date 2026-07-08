@@ -126,7 +126,7 @@ export const OfflineQueueProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const stored = await SecureStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored as string);
         // Convert timestamp strings back to Date objects
         const items = parsed.map((item: any) => ({
           ...item,

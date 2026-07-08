@@ -2,7 +2,7 @@ import React from 'react';
 import { Shield, Heart, Phone, CheckCircle } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent } from '@/app/components/ui/card';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 const translations = {
   sw: {
@@ -44,7 +44,7 @@ interface LogoutScreenProps {
 }
 
 export function LogoutScreen({ onReturn, onConfirmLogout, showConfirmation }: LogoutScreenProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
   const [confirm, setConfirm] = React.useState(showConfirmation || false);
 

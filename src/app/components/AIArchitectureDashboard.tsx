@@ -18,7 +18,7 @@ import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { Progress } from '@/app/components/ui/progress';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 const translations = {
   sw: {
@@ -54,7 +54,7 @@ interface AIArchitectureProps {
 }
 
 export function AIArchitectureDashboard({ onBack }: AIArchitectureProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
 
   const systemLayers = [

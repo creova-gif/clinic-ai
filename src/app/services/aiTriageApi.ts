@@ -72,7 +72,7 @@ export const aiTriageApi = {
       // Save to database
       const { data, error } = await supabase
         .from('triage_assessments')
-        .insert(assessment)
+        .insert(assessment as any)
         .select()
         .single();
 

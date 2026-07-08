@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface InAppGuidanceSystemProps {
@@ -151,7 +151,7 @@ const guidanceDatabase: Record<string, GuidanceContent[]> = {
 };
 
 export function InAppGuidanceSystem({ enabled = true }: InAppGuidanceSystemProps) {
-  const { language, isOffline } = useApp();
+  const { language, isOffline } = useAppStore();
   const t = translations[language];
   
   const [isHelpOpen, setIsHelpOpen] = useState(false);

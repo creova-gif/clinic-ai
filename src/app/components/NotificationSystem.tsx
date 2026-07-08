@@ -12,7 +12,7 @@ import {
 import { Card, CardContent } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface NotificationSystemProps {
@@ -110,7 +110,7 @@ const translations = {
 };
 
 export function NotificationSystem({ enabled = true }: NotificationSystemProps) {
-  const { language, userRole } = useApp();
+  const { language, userRole } = useAppStore();
   const t = translations[language];
   
   const [notifications, setNotifications] = useState<Notification[]>([]);

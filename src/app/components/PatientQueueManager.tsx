@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { patientQueueApi } from '@/app/services/patientQueueApi';
 import type { PatientQueueItem, ClinicalNote, LabOrder, MedicationDispense } from '@/app/services/patientQueueApi';
 import { toast } from 'sonner';
+import { MicroErrorBoundary } from '@/app/components/ui/micro-error-boundary';
 
 const COLORS = {
   primary: "#0F3D56",
@@ -568,8 +569,9 @@ export default function PatientQueueManager() {
         </div>
       </header>
 
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* Left: Stats + Queue */}
+      <MicroErrorBoundary fallbackMessage="The patient queue experienced an error. Please try again.">
+        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+          {/* Left: Stats + Queue */}
         <div style={{ width: 360, flexShrink: 0, display: "flex", flexDirection: "column", borderRight: `1px solid ${COLORS.neutral200}`, background: COLORS.white }}>
           {/* Stats */}
           <div style={{ padding: "14px 16px", borderBottom: `1px solid ${COLORS.neutral200}` }}>
@@ -612,7 +614,8 @@ export default function PatientQueueManager() {
         <div style={{ flex: 1, overflowY: "auto", background: COLORS.white }}>
           <PatientDetail patient={selectedPatient} />
         </div>
-      </div>
+        </div>
+      </MicroErrorBoundary>
     </div>
   );
 }

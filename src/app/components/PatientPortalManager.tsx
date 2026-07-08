@@ -4,7 +4,8 @@ import { DigitalPatientOnboarding, PatientOnboardingData } from './DigitalPatien
 import { InAppGuidanceSystem } from './InAppGuidanceSystem';
 import { NotificationSystem } from './NotificationSystem';
 import { SelfHelpCenter } from './SelfHelpCenter';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
+import { SecureStorage } from '@/app/utils/SecureStorage';
 
 interface PatientPortalManagerProps {
   enabled?: boolean;
@@ -30,7 +31,7 @@ export function PatientPortalManager({
   enabled = true,
   onPortalDataUpdate 
 }: PatientPortalManagerProps) {
-  const { userRole, userData, language } = useApp();
+  const { userRole, userData, language } = useAppStore();
   
   // Portal states
   const [showPortalHub, setShowPortalHub] = useState(false);
@@ -45,7 +46,7 @@ export function PatientPortalManager({
       setOnboardingComplete(completed === 'true');
       
       // Check if registration is incomplete
-      const registrationData = localStorage.getItem('patient_onboarding_draft');
+      const registrationData = SecureStorage.getItem('patient_onboarding_draft');
       if (!completed && !registrationData) {
         // First time - show onboarding after a delay
         const timer = setTimeout(() => {
@@ -188,7 +189,7 @@ export function PatientPortalManager({
  * Invisible UX component that shows sync status when needed
  */
 function EHRSyncStatus() {
-  const { language, isOffline } = useApp();
+  const { language, isOffline } = useAppStore();
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'error'>('synced');
   const [showStatus, setShowStatus] = useState(false);
   
@@ -244,7 +245,7 @@ function EHRSyncStatus() {
  * Visible trust feature showing data protection
  */
 function PrivacyIndicator() {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const [showIndicator, setShowIndicator] = useState(false);
   
   // Show privacy indicator on first load

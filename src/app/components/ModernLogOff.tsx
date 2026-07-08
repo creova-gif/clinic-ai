@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Shield, CheckCircle2, Calendar, Phone, Heart, ChevronRight, AlertTriangle, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
-import { useSharedDevice } from '../context/SharedDeviceContext';
+import { useSharedDeviceStore } from '../store/useSharedDeviceStore';
 
 interface ModernLogOffProps {
   language: 'sw' | 'en';
@@ -28,7 +28,7 @@ export function ModernLogOff({
   onConfirmLogout,
   onCancel,
 }: ModernLogOffProps) {
-  const { isSharedDevice, logActivity } = useSharedDevice();
+  const { isSharedDevice, logActivity } = useSharedDeviceStore();
   const [clearData, setClearData] = useState(isSharedDevice); // Force true on shared devices
 
   const content = {

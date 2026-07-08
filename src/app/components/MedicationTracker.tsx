@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Pill, Clock, ChevronLeft } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useAppStore } from '../store/useAppStore';
 import { api } from '@/app/services/api';
 import type { Medication as ApiMedication } from '@/app/services/supabase';
 import { getAuthUserId } from '@/app/utils/auth';
@@ -51,7 +51,7 @@ function getCardStatus(taken: boolean, scheduledTime: string): CardStatus {
 }
 
 export function MedicationTracker({ onBack }: { onBack: () => void }) {
-  const { language } = useApp();
+  const { language } = useAppStore();
 
   // ── Data-fetching (preserved exactly) ──────────────────────────────────────
   const [isLoading, setIsLoading] = useState(false);

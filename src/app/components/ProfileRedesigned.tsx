@@ -28,7 +28,6 @@ import { HeroHeader } from '@/app/components/ui/HeroHeader';
 import { AnimatedButton } from '@/app/components/ui/AnimatedButton';
 import {
   EmergencyIcon,
-  LogOutIcon,
 } from './icons/MedicalIcons';
 import { MedicalButton } from './ui/medical-button';
 
@@ -317,7 +316,7 @@ export function Profile({
         >
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-[#FEE2E2] rounded-full flex items-center justify-center mx-auto mb-4">
-              <LogOutIcon size={32} color="#DC2626" />
+              <LogOut size={32} color="#DC2626" />
             </div>
             <h2 className="text-xl font-semibold text-[#1E1E1E] mb-2">
               {t.logout.title}

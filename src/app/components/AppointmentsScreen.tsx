@@ -5,7 +5,7 @@ import { HeroHeader } from '@/app/components/ui/HeroHeader';
 import { AnimatedButton } from '@/app/components/ui/AnimatedButton';
 import { StatusBadge } from '@/app/components/ui/StatusBadge';
 import { ConfettiCelebration } from '@/app/components/ui/ConfettiCelebration';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 const translations = {
   sw: {
@@ -110,7 +110,7 @@ function getStatusConfig(status: AppointmentStatus, t: typeof translations['en']
 }
 
 export function AppointmentsScreen({ onBack }: AppointmentsScreenProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
 

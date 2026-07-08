@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useAppStore } from '../store/useAppStore';
 import {
   MapPin,
   Phone,
@@ -94,7 +94,7 @@ interface Facility {
 }
 
 export function FacilityFinder({ onBack }: { onBack: () => void }) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedService, setSelectedService] = useState<string>('all');

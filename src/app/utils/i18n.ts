@@ -88,6 +88,8 @@ const languageStorage = {
  */
 const customDetector = {
   name: 'customDetector',
+  type: 'languageDetector' as const,
+  lookup: () => undefined,
   
   async: true,
   

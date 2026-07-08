@@ -10,7 +10,7 @@ import {
   ArrowLeft, Mic, Send, Sparkles, Calendar, Pill, Activity,
   Video, Phone, MapPin, ChevronRight, AlertTriangle, Heart, X,
 } from 'lucide-react';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 interface AIHealthChatProps {
   onBack: () => void;
@@ -123,7 +123,7 @@ function uid() {
 }
 
 export function AIHealthChat({ onBack, onNavigate }: AIHealthChatProps) {
-  const { language: ctxLang } = useApp();
+  const { language: ctxLang } = useAppStore();
   const lang = (ctxLang ?? 'sw') as 'sw' | 'en';
   const prompts = SUGGESTED_PROMPTS[lang];
 

@@ -31,7 +31,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { useApp } from '@/app/context/AppContext';
+import { useAppStore } from '@/app/store/useAppStore';
 
 const translations = {
   sw: {
@@ -131,7 +131,7 @@ interface MoHDashboardProps {
 }
 
 export function MoHDashboard({ onBack, onViewArchitecture, onViewMonitoring }: MoHDashboardProps) {
-  const { language } = useApp();
+  const { language } = useAppStore();
   const t = translations[language];
 
   return (

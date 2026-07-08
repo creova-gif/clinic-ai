@@ -653,20 +653,3 @@ export interface FHIRMapping {
 // TYPE EXPORTS
 // ===========================================
 
-export type {
-  Patient,
-  MasterPatientIndex,
-  Encounter,
-  ClinicalNote,
-  VitalSigns,
-  Prescription,
-  Drug,
-  LabOrder,
-  LabResult,
-  QueueEntry,
-  Facility,
-  User,
-  AuditLog,
-  MoHReport,
-  FHIRMapping
-};

@@ -1,26 +1,10 @@
-/**
- * SymptomCheckerAI - Conversational AI Symptom Assessment
- * Step-by-step, one question at a time
- * Risk-based recommendations with clear explanations
- * Tanzania-focused (malaria, TB, maternal risk, respiratory, NCDs)
- */
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  ArrowLeft,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  Thermometer,
-  Heart,
-  Activity,
-  Send,
-  Sparkles,
-  Calendar,
-  MapPin,
-} from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, Info, Send, Activity, BrainCircuit } from 'lucide-react';
 import { Button } from './ui/button';
+import { getChatModel } from '../services/firebaseAI';
+import { ClinicalTriageEngine, TriageResult } from './ClinicalTriageEngine';
+import { AutonomousDispatchEngine, DispatchTask } from '../services/AutonomousDispatchEngine';
 
 interface SymptomCheckerAIProps {
   language: 'sw' | 'en';
@@ -36,14 +20,6 @@ interface Message {
   timestamp: Date;
 }
 
-interface Assessment {
-  riskLevel: 'low' | 'medium' | 'high' | 'emergency';
-  conditions: string[];
-  reasoning: string;
-  nextSteps: string[];
-  urgency: string;
-}
-
 export function SymptomCheckerAI({
   language,
   onBack,
@@ -52,621 +28,327 @@ export function SymptomCheckerAI({
 }: SymptomCheckerAIProps) {
   const [step, setStep] = useState<'intro' | 'assessment' | 'results'>('intro');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
   const [userInput, setUserInput] = useState('');
-  const [responses, setResponses] = useState<Record<string, any>>({});
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [assessment, setAssessment] = useState<TriageResult | null>(null);
+  const [dispatchTask, setDispatchTask] = useState<DispatchTask | null>(null);
+  
+  const chatSessionRef = useRef<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const content = {
+  const t = {
     sw: {
-      title: 'Tathmini ya Dalili',
-      subtitle: 'Nitakusaidia kuelewa dalili zako',
-      intro: {
-        welcome: 'Habari! Nina furaha kukusaidia kuelewa dalili zako.',
-        explanation:
-          'Nitakuuliza maswali machache kuhusu jinsi unavyohisi. Majibu yako yatasaidia kupanga hatua zinazofuata salama.',
-        disclaimer:
-          'Kumbuka: Sitoi uchunguzi. Ninasaidia kukuelekeza kwa huduma sahihi.',
-        startButton: 'Anza Tathmini',
-      },
-      questions: [
-        {
-          text: 'Nini kinakusumbua zaidi?',
-          options: [
-            'Homa',
-            'Maumivu ya kichwa',
-            'Kikohozi',
-            'Maumivu ya tumbo',
-            'Uchovu',
-            'Nyingine',
-          ],
-          followUp: 'Naelewa. Nieleze zaidi...',
-        },
-        {
-          text: 'Umehisi hivi kwa muda gani?',
-          options: ['Saa chache', 'Siku 1-2', 'Wiki moja', 'Zaidi ya wiki moja'],
-          followUp: 'Asante. Ni muhimu kujua muda.',
-        },
-        {
-          text: 'Je, una homa?',
-          options: ['Ndio, joto sana', 'Ndio, kidogo', 'Hapana', 'Sijui'],
-          followUp: 'Hii inasaidia kuelewa hali yako.',
-        },
-      ],
-      riskLevels: {
-        low: {
-          title: 'Hatari ya Chini',
-          color: '#10B981',
-          icon: CheckCircle,
-        },
-        medium: {
-          title: 'Hatari ya Wastani',
-          color: '#F59E0B',
-          icon: Info,
-        },
-        high: {
-          title: 'Hatari ya Juu',
-          color: '#EF4444',
-          icon: AlertCircle,
-        },
-        emergency: {
-          title: 'Hali ya Dharura',
-          color: '#DC2626',
-          icon: AlertCircle,
-        },
-      },
-      results: {
-        title: 'Matokeo ya Tathmini',
-        reasoning: 'Kwa nini nasema hivi:',
-        nextSteps: 'Hatua Zinazofuata:',
-        bookAppointment: 'Panga Miadi',
-        contactCHW: 'Wasiliana na CHW',
-        startOver: 'Anza Upya',
-      },
-      typing: 'Inaandika...',
+      title: 'Tathmini ya Dalili na AI',
+      subtitle: 'Tafadhali nieleze unavyojiskia kwa maneno yako mwenyewe.',
+      intro: 'Habari! Mimi ni msaidizi wako wa afya. Tafadhali niandikie dalili zako zote, na nitakuuliza maswali machache ili kuelewa vizuri.',
+      start: 'Anza Mazungumzo',
+      placeholder: 'Andika hapa...',
+      resultsTitle: 'Matokeo ya Tathmini',
+      book: 'Panga Miadi',
+      chw: 'Wasiliana na CHW',
+      startOver: 'Anza Upya',
+      dispatchSuccess: 'Mhudumu wa afya ametumwa na yuko njiani kukusaidia.'
     },
     en: {
-      title: 'Symptom Assessment',
-      subtitle: 'I\'ll help you understand your symptoms',
-      intro: {
-        welcome: 'Hello! I\'m here to help you understand your symptoms.',
-        explanation:
-          'I\'ll ask you a few questions about how you\'re feeling. Your answers will help determine the safest next steps.',
-        disclaimer:
-          'Remember: I don\'t diagnose. I help guide you to the right care.',
-        startButton: 'Start Assessment',
-      },
-      questions: [
-        {
-          text: 'What\'s bothering you the most?',
-          options: [
-            'Fever',
-            'Headache',
-            'Cough',
-            'Stomach pain',
-            'Fatigue',
-            'Other',
-          ],
-          followUp: 'I understand. Tell me more...',
-        },
-        {
-          text: 'How long have you felt this way?',
-          options: ['A few hours', '1-2 days', 'About a week', 'More than a week'],
-          followUp: 'Thank you. Duration is important.',
-        },
-        {
-          text: 'Do you have a fever?',
-          options: ['Yes, very high', 'Yes, mild', 'No', 'Not sure'],
-          followUp: 'This helps me understand your condition.',
-        },
-      ],
-      riskLevels: {
-        low: {
-          title: 'Low Risk',
-          color: '#10B981',
-          icon: CheckCircle,
-        },
-        medium: {
-          title: 'Medium Risk',
-          color: '#F59E0B',
-          icon: Info,
-        },
-        high: {
-          title: 'High Risk',
-          color: '#EF4444',
-          icon: AlertCircle,
-        },
-        emergency: {
-          title: 'Emergency',
-          color: '#DC2626',
-          icon: AlertCircle,
-        },
-      },
-      results: {
-        title: 'Assessment Results',
-        reasoning: 'Why I\'m telling you this:',
-        nextSteps: 'Recommended Next Steps:',
-        bookAppointment: 'Book Appointment',
-        contactCHW: 'Contact CHW',
-        startOver: 'Start Over',
-      },
-      typing: 'Typing...',
-    },
-  };
-
-  const t = content[language];
-
-  const handleStartAssessment = () => {
-    setStep('assessment');
-    const welcomeMessage: Message = {
-      id: Date.now().toString(),
-      type: 'ai',
-      content: t.questions[0].text,
-      timestamp: new Date(),
-    };
-    setMessages([welcomeMessage]);
-  };
-
-  const handleOptionSelect = (option: string) => {
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: option,
-      timestamp: new Date(),
-    };
-
-    // Store response
-    const newResponses = {
-      ...responses,
-      [`question_${currentQuestion}`]: option,
-    };
-    setResponses(newResponses);
-
-    // Show follow-up
-    const followUpMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'ai',
-      content: t.questions[currentQuestion].followUp,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage, followUpMessage]);
-
-    // Move to next question or complete
-    setTimeout(() => {
-      if (currentQuestion < t.questions.length - 1) {
-        setCurrentQuestion(currentQuestion + 1);
-        const nextQuestion: Message = {
-          id: (Date.now() + 2).toString(),
-          type: 'ai',
-          content: t.questions[currentQuestion + 1].text,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, nextQuestion]);
-      } else {
-        // Complete assessment
-        completeAssessment(newResponses);
-      }
-    }, 1500);
-  };
-
-  const completeAssessment = (allResponses: Record<string, any>) => {
-    // Simple risk assessment logic (in production, this would be more sophisticated)
-    const mainSymptom = allResponses.question_0 || '';
-    const duration = allResponses.question_1 || '';
-    const hasFever = allResponses.question_2 || '';
-
-    let riskLevel: 'low' | 'medium' | 'high' | 'emergency' = 'low';
-    let conditions: string[] = [];
-    let reasoning = '';
-    let nextSteps: string[] = [];
-    let urgency = '';
-
-    // Risk assessment logic
-    if (hasFever.includes('very high') || mainSymptom.includes('Stomach pain')) {
-      riskLevel = 'high';
-      if (language === 'sw') {
-        conditions = ['Uwezekano wa malaria', 'Uwezekano wa ugonjwa wa tumbo'];
-        reasoning =
-          'Homa kali pamoja na dalili nyingine inaweza kuonyesha ugonjwa unaohitaji matibabu ya haraka. Malaria ni kawaida Tanzania na inahitaji uchunguzi wa damu.';
-        nextSteps = [
-          'Tembelea kituo cha afya ndani ya saa 24',
-          'Fanya vipimo vya damu',
-          'Usisubiri dalili ziwe mbaya zaidi',
-        ];
-        urgency = 'Tembelea kituo ndani ya saa 24';
-      } else {
-        conditions = ['Possible malaria', 'Possible gastric infection'];
-        reasoning =
-          'High fever combined with your other symptoms may indicate an infection requiring prompt medical attention. Malaria is common in Tanzania and requires blood testing.';
-        nextSteps = [
-          'Visit a health facility within 24 hours',
-          'Get blood tests done',
-          'Don\'t wait for symptoms to worsen',
-        ];
-        urgency = 'Visit facility within 24 hours';
-      }
-    } else if (
-      duration.includes('week') ||
-      mainSymptom.includes('Cough') ||
-      mainSymptom.includes('Kikohozi')
-    ) {
-      riskLevel = 'medium';
-      if (language === 'sw') {
-        conditions = ['Uwezekano wa ugonjwa wa hewa ya kupumua'];
-        reasoning =
-          'Kikohozi kinachoendelea au dalili za wiki nyingi zinahitaji tathmini ya daktari. Hii inaweza kuwa ugonjwa wa kawaida au uwezekano wa hali ya ziada.';
-        nextSteps = [
-          'Panga miadi ndani ya siku 2-3',
-          'Pumzika vizuri',
-          'Kunywa maji mengi',
-          'Fuata maelekezo ya matibabu',
-        ];
-        urgency = 'Panga miadi ndani ya siku 2-3';
-      } else {
-        conditions = ['Possible respiratory infection'];
-        reasoning =
-          'A persistent cough or symptoms lasting weeks needs medical evaluation. This could be a common illness or potentially something requiring further investigation.';
-        nextSteps = [
-          'Schedule an appointment within 2-3 days',
-          'Get adequate rest',
-          'Stay hydrated',
-          'Follow medication guidance',
-        ];
-        urgency = 'Schedule appointment within 2-3 days';
-      }
-    } else {
-      riskLevel = 'low';
-      if (language === 'sw') {
-        conditions = ['Dalili za kawaida'];
-        reasoning =
-          'Dalili zako zinaonekana kuwa za kawaida na zinaweza kuwa za muda mfupi. Hata hivyo, kama zinaendelea au zinazidi, tembelea kituo cha afya.';
-        nextSteps = [
-          'Pumzika vizuri',
-          'Kunywa maji mengi',
-          'Fuatilia dalili',
-          'Tembelea daktari kama haziendi',
-        ];
-        urgency = 'Dhibiti nyumbani, tembelea kama haziendi';
-      } else {
-        conditions = ['Common symptoms'];
-        reasoning =
-          'Your symptoms appear to be mild and may be temporary. However, if they persist or worsen, please visit a health facility.';
-        nextSteps = [
-          'Get adequate rest',
-          'Stay hydrated',
-          'Monitor symptoms',
-          'Visit doctor if they don\'t improve',
-        ];
-        urgency = 'Self-care at home, visit if symptoms persist';
-      }
+      title: 'AI Symptom Assessment',
+      subtitle: 'Please describe how you are feeling in your own words.',
+      intro: 'Hello! I am your AI health assistant. Please describe your symptoms, and I will ask a few follow-up questions to understand better.',
+      start: 'Start Chat',
+      placeholder: 'Type here...',
+      resultsTitle: 'Assessment Results',
+      book: 'Book Appointment',
+      chw: 'Contact CHW',
+      startOver: 'Start Over',
+      dispatchSuccess: 'A Community Health Worker has been autonomously dispatched and is on their way.'
     }
+  }[language];
 
-    setAssessment({
-      riskLevel,
-      conditions,
-      reasoning,
-      nextSteps,
-      urgency,
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
+
+  const initChat = async () => {
+    setStep('assessment');
+    
+    const systemInstruction = `
+      You are an empathetic, clinical AI assistant for AfyaCare.
+      Language: ${language === 'sw' ? 'Swahili' : 'English'}.
+      Ask 2-3 probing questions to understand the patient's symptoms (e.g. duration, severity, fever).
+      Ask one question at a time.
+      Once you have enough information to make a triage decision (mild, moderate, urgent, emergency), reply EXACTLY with the string: "[ASSESSMENT_COMPLETE]" and nothing else.
+    `;
+    
+    chatSessionRef.current = getChatModel().startChat({
+      history: [
+        { role: 'user', parts: [{ text: systemInstruction }] },
+        { role: 'model', parts: [{ text: 'Understood. I will ask questions and output [ASSESSMENT_COMPLETE] when done.' }] }
+      ]
     });
 
-    setStep('results');
+    setMessages([{
+      id: Date.now().toString(),
+      type: 'ai',
+      content: language === 'sw' ? 'Nini kinakusumbua leo? Tafadhali nieleze.' : 'What is bothering you today? Please tell me.',
+      timestamp: new Date()
+    }]);
   };
 
-  // Intro Screen
-  if (step === 'intro') {
-    return (
-      <div className="min-h-screen bg-[#FAFBFC]">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-[#1E88E5] to-[#1565C0] text-white">
-          <div className="max-w-4xl mx-auto px-6 py-6">
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 mb-6 text-white/90 hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="text-sm font-medium">
-                {language === 'sw' ? 'Rudi' : 'Back'}
-              </span>
-            </button>
+  const handleSend = async () => {
+    if (!userInput.trim() || isTyping) return;
 
-            <div className="flex items-center gap-3 mb-3">
-              <Thermometer className="w-8 h-8" />
-              <h1 className="text-3xl font-bold">{t.title}</h1>
-            </div>
-            <p className="text-white/90 text-base">{t.subtitle}</p>
-          </div>
-        </div>
+    const userMsg = userInput.trim();
+    setUserInput('');
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      type: 'user',
+      content: userMsg,
+      timestamp: new Date()
+    }]);
+    
+    setIsTyping(true);
+    
+    try {
+      const response = await chatSessionRef.current.sendMessage(userMsg);
+      const text = response.response.text();
+      
+      if (text.includes('[ASSESSMENT_COMPLETE]')) {
+        await finalizeAssessment();
+      } else {
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          type: 'ai',
+          content: text,
+          timestamp: new Date()
+        }]);
+      }
+    } catch (e) {
+      console.error(e);
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        type: 'system',
+        content: 'Connection error. Please try again.',
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
-        {/* Content */}
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            {/* AI Introduction */}
-            <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-[#EFF6FF] rounded-full flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-[#1E88E5]" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-base text-[#1A1D23] leading-relaxed mb-4">
-                    {t.intro.welcome}
-                  </p>
-                  <p className="text-base text-[#6B7280] leading-relaxed">
-                    {t.intro.explanation}
-                  </p>
-                </div>
-              </div>
-            </div>
+  const finalizeAssessment = async () => {
+    setIsTyping(true);
+    const transcript = messages.map(m => `${m.type.toUpperCase()}: ${m.content}`).join('\n');
+    
+    try {
+      const result = await ClinicalTriageEngine.assessSymptomsWithAI(transcript, language);
+      setAssessment(result);
+      
+      if (result.level === 'urgent' || result.level === 'emergency') {
+         const dispatched = await AutonomousDispatchEngine.dispatchCHW(
+           { name: 'Current Patient', phone: '0700000000', location: { lat: -6.8, lng: 39.25 }, language },
+           result
+         );
+         if (dispatched) {
+           setDispatchTask(dispatched);
+         }
+      }
+      
+      setStep('results');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
-            {/* Disclaimer */}
-            <div className="bg-[#FEF2F2] rounded-xl border border-[#FEE2E2] p-4">
-              <div className="flex items-start gap-3">
-                <Info className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-[#991B1B] leading-relaxed">
-                  {t.intro.disclaimer}
-                </p>
-              </div>
-            </div>
+  const getRiskColor = (level: string) => {
+    switch(level) {
+      case 'emergency': return '#DC2626';
+      case 'urgent': return '#EF4444';
+      case 'moderate': return '#F59E0B';
+      default: return '#10B981';
+    }
+  };
 
-            {/* What to expect */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-[#1A1D23]">
-                {language === 'sw' ? 'Nini kutarajia:' : 'What to expect:'}
-              </h3>
-              <div className="space-y-2">
-                {[
-                  language === 'sw'
-                    ? 'Maswali 3-5 ya rahisi'
-                    : '3-5 simple questions',
-                  language === 'sw'
-                    ? 'Muda wa dakika 2-3'
-                    : '2-3 minutes of your time',
-                  language === 'sw'
-                    ? 'Mapendekezo wazi ya hatua zinazofuata'
-                    : 'Clear next-step recommendations',
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#10B981]" />
-                    <span className="text-[#6B7280]">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Start Button */}
-            <Button
-              onClick={handleStartAssessment}
-              className="w-full h-14 bg-[#1E88E5] hover:bg-[#1976D2] text-lg font-semibold"
-            >
-              {t.intro.startButton}
-            </Button>
-          </motion.div>
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="flex items-center p-4 border-b">
+        <button onClick={onBack} className="p-2 mr-2 rounded-full hover:bg-gray-100">
+          <ArrowLeft size={20} />
+        </button>
+        <div>
+          <h2 className="font-semibold text-lg">{t.title}</h2>
+          <p className="text-sm text-gray-500">{t.subtitle}</p>
         </div>
       </div>
-    );
-  }
 
-  // Assessment Screen
-  if (step === 'assessment') {
-    return (
-      <div className="min-h-screen bg-[#FAFBFC] flex flex-col">
-        {/* Header */}
-        <div className="bg-white border-b border-[#E5E7EB]">
-          <div className="max-w-4xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-[#6B7280] hover:text-[#1A1D23] transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="text-sm font-medium">
-                  {language === 'sw' ? 'Rudi' : 'Back'}
-                </span>
-              </button>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#1E88E5]" />
-                <span className="text-sm font-medium text-[#1A1D23]">
-                  {language === 'sw' ? 'Msaidizi wa AI' : 'AI Assistant'}
-                </span>
-              </div>
+      {step === 'intro' && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex flex-col items-center justify-center p-8 text-center flex-1"
+        >
+          <div className="relative mb-8">
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.6, 0.3]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="absolute inset-0 bg-blue-400 rounded-full blur-xl"
+            />
+            <div className="relative w-24 h-24 bg-gradient-to-br from-blue-50 to-blue-100 rounded-full flex items-center justify-center border border-blue-200 shadow-inner">
+              <BrainCircuit className="text-blue-600 w-10 h-10" />
             </div>
           </div>
-        </div>
+          <p className="text-gray-600 mb-8 max-w-md text-lg leading-relaxed">{t.intro}</p>
+          <Button onClick={initChat} className="w-full max-w-xs shadow-lg shadow-blue-200/50 hover:shadow-blue-300/50 transition-all text-lg py-6 rounded-2xl">
+            {t.start}
+          </Button>
+        </motion.div>
+      )}
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 max-w-4xl mx-auto w-full">
-          <div className="space-y-4">
+      {step === 'assessment' && (
+        <div className="flex flex-col flex-1 overflow-hidden bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <AnimatePresence>
-              {messages.map((message, index) => (
+              {messages.map((msg) => (
                 <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`flex ${
-                    message.type === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  {message.type === 'ai' && (
-                    <div className="flex items-start gap-3 max-w-[80%]">
-                      <div className="flex-shrink-0 w-10 h-10 bg-[#EFF6FF] rounded-full flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-[#1E88E5]" />
-                      </div>
-                      <div className="bg-white rounded-2xl rounded-tl-sm border border-[#E5E7EB] p-4">
-                        <p className="text-base text-[#1A1D23] leading-relaxed">
-                          {message.content}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {message.type === 'user' && (
-                    <div className="bg-[#1E88E5] text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
-                      <p className="text-base leading-relaxed">{message.content}</p>
-                    </div>
-                  )}
+                  <div className={`max-w-[80%] p-4 rounded-3xl ${
+                    msg.type === 'user' 
+                      ? 'bg-blue-600 text-white rounded-br-sm shadow-md shadow-blue-200/50' 
+                      : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'
+                  }`}>
+                    {msg.content}
+                  </div>
                 </motion.div>
               ))}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Options */}
-        <div className="bg-white border-t border-[#E5E7EB] px-6 py-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-2 gap-3">
-              {t.questions[currentQuestion].options.map((option, idx) => (
-                <Button
-                  key={idx}
-                  onClick={() => handleOptionSelect(option)}
-                  variant="outline"
-                  className="h-auto py-4 text-left justify-start hover:bg-[#EFF6FF] hover:border-[#1E88E5]"
+              {isTyping && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex justify-start"
                 >
-                  {option}
-                </Button>
-              ))}
+                  <div className="bg-white border border-gray-100 p-4 rounded-3xl rounded-bl-sm shadow-sm flex gap-1.5 items-center h-12">
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        animate={{ y: [0, -5, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                        className="w-2 h-2 bg-blue-400 rounded-full"
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div ref={messagesEndRef} />
+          </div>
+          
+          <div className="p-4 bg-white border-t">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={userInput}
+                onChange={e => setUserInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder={t.placeholder}
+                className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isTyping}
+              />
+              <button 
+                onClick={handleSend}
+                disabled={!userInput.trim() || isTyping}
+                className="bg-blue-600 text-white p-2 rounded-full disabled:opacity-50"
+              >
+                <Send size={20} />
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  // Results Screen
-  if (step === 'results' && assessment) {
-    const riskInfo = t.riskLevels[assessment.riskLevel];
-    const RiskIcon = riskInfo.icon;
-
-    return (
-      <div className="min-h-screen bg-[#FAFBFC] pb-8">
-        {/* Header */}
-        <div className="bg-white border-b border-[#E5E7EB]">
-          <div className="max-w-4xl mx-auto px-6 py-6">
-            <h1 className="text-2xl font-bold text-[#1A1D23] mb-2">
-              {t.results.title}
-            </h1>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
-          {/* Risk Level */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+      {step === 'results' && assessment && (
+        <div className="flex-1 overflow-y-auto p-6">
+          <h2 className="text-xl font-bold mb-6 text-center">{t.resultsTitle}</h2>
+          
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl border-2 p-6"
-            style={{ borderColor: riskInfo.color }}
+            className="rounded-2xl p-8 mb-6 text-white text-center shadow-[0_8px_30px_rgb(0,0,0,0.12)] relative overflow-hidden"
+            style={{ backgroundColor: getRiskColor(assessment.level) }}
           >
-            <div className="flex items-center gap-4 mb-4">
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: `${riskInfo.color}15` }}
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
+            <div className="relative z-10">
+              <motion.div 
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="flex justify-center mb-4"
               >
-                <RiskIcon className="w-8 h-8" style={{ color: riskInfo.color }} />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-[#1A1D23]">
-                  {riskInfo.title}
-                </h2>
-                <p className="text-[#6B7280]">{assessment.urgency}</p>
-              </div>
+                <AlertCircle size={56} className="drop-shadow-lg" />
+              </motion.div>
+              <h3 className="text-3xl font-bold capitalize mb-2 drop-shadow-md">{assessment.level}</h3>
+              <p className="text-lg text-white/90 font-medium">{assessment.recommendation}</p>
             </div>
           </motion.div>
 
-          {/* Possible Conditions */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
-            <h3 className="text-lg font-semibold text-[#1A1D23] mb-3">
-              {language === 'sw' ? 'Uwezekano:' : 'Possible conditions:'}
-            </h3>
-            <ul className="space-y-2">
-              {assessment.conditions.map((condition, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <Activity className="w-5 h-5 text-[#1E88E5] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1A1D23]">{condition}</span>
-                </li>
+          {dispatchTask && (
+             <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-6 shadow-sm">
+                <h4 className="font-semibold text-green-800 flex items-center gap-2 mb-2">
+                  <CheckCircle size={18} /> Autonomous Dispatch Active
+                </h4>
+                <p className="text-green-700">{t.dispatchSuccess}</p>
+             </div>
+          )}
+
+          <div className="bg-white border rounded-xl p-5 mb-6 shadow-sm">
+            <h4 className="font-semibold mb-3 flex items-center gap-2">
+              <Info size={18} className="text-blue-500"/> Reasoning
+            </h4>
+            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+              {assessment.reasoning.map((r: string, i: number) => (
+                <li key={i}>{r}</li>
               ))}
             </ul>
           </div>
 
-          {/* Reasoning */}
-          <div className="bg-[#EFF6FF] rounded-xl border border-[#DBEAFE] p-6">
-            <div className="flex items-start gap-3 mb-3">
-              <Info className="w-5 h-5 text-[#1E88E5] flex-shrink-0 mt-0.5" />
-              <h3 className="text-base font-semibold text-[#1A1D23]">
-                {t.results.reasoning}
-              </h3>
-            </div>
-            <p className="text-[#1A1D23] leading-relaxed">{assessment.reasoning}</p>
-          </div>
-
-          {/* Next Steps */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
-            <h3 className="text-lg font-semibold text-[#1A1D23] mb-4">
-              {t.results.nextSteps}
-            </h3>
-            <ol className="space-y-3">
-              {assessment.nextSteps.map((step, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-[#1E88E5] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    {idx + 1}
-                  </div>
-                  <span className="text-[#1A1D23] flex-1">{step}</span>
-                </li>
+          <div className="bg-gray-50 border rounded-xl p-5 mb-8">
+            <h4 className="font-semibold mb-3 text-gray-500 text-sm uppercase">Safety Disclaimers</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              {assessment.disclaimers?.map((d: string, i: number) => (
+                <li key={i}>{d}</li>
               ))}
-            </ol>
+            </ul>
           </div>
 
-          {/* Actions */}
-          <div className="space-y-3">
-            {(assessment.riskLevel === 'high' ||
-              assessment.riskLevel === 'medium') && (
-              <Button
-                onClick={onBookAppointment}
-                className="w-full h-14 bg-[#1E88E5] hover:bg-[#1976D2] text-base font-semibold"
-              >
-                <Calendar className="w-5 h-5 mr-2" />
-                {t.results.bookAppointment}
+          <div className="flex flex-col gap-3">
+            {assessment.level === 'emergency' ? (
+              <Button onClick={() => window.location.href = 'tel:114'} className="bg-red-600 hover:bg-red-700 text-lg py-6">
+                Call 114 Emergency
               </Button>
+            ) : (
+              <Button onClick={onBookAppointment} className="py-6 text-lg">{t.book}</Button>
             )}
-            <Button
-              onClick={onContactCHW}
-              variant="outline"
-              className="w-full h-14 border-[#1E88E5] text-[#1E88E5] hover:bg-[#EFF6FF] text-base font-semibold"
-            >
-              <MapPin className="w-5 h-5 mr-2" />
-              {t.results.contactCHW}
-            </Button>
-            <Button
-              onClick={() => {
-                setStep('intro');
-                setMessages([]);
-                setCurrentQuestion(0);
-                setResponses({});
-                setAssessment(null);
-              }}
-              variant="ghost"
-              className="w-full h-12 text-[#6B7280] hover:text-[#1A1D23]"
-            >
-              {t.results.startOver}
-            </Button>
-          </div>
-
-          {/* Disclaimer */}
-          <div className="bg-[#FEF2F2] rounded-xl border border-[#FEE2E2] p-4">
-            <p className="text-xs text-[#991B1B] text-center leading-relaxed">
-              {language === 'sw'
-                ? 'Tathmini hii ni kwa maelekezo tu. Wasiliana na daktari kwa uchunguzi wa kina.'
-                : 'This assessment is for guidance only. Consult a doctor for proper diagnosis.'}
-            </p>
+            <Button variant="outline" onClick={onContactCHW}>{t.chw}</Button>
+            <Button variant="ghost" onClick={() => {
+              setStep('intro');
+              setMessages([]);
+            }}>{t.startOver}</Button>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return null;
+      )}
+    </div>
+  );
 }
