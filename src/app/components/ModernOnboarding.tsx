@@ -252,7 +252,7 @@ export function ModernOnboarding({ onComplete }: ModernOnboardingProps) {
                 <GoalStep
                   content={t.goal}
                   selected={primaryGoal}
-                  onSelect={(goal) => {
+                  onSelect={(goal: string) => {
                     setPrimaryGoal(goal);
                     setTimeout(() => setStep(3), 300);
                   }}

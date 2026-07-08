@@ -238,7 +238,7 @@ export const VitalsEntry: React.FC<VitalsEntryProps> = ({
                 value={vitals.blood_pressure_systolic || ''}
                 onChange={(e) => setVitals({ ...vitals, blood_pressure_systolic: parseInt(e.target.value) || undefined })}
                 placeholder="Systolic"
-                className={getInputClass(vitals.blood_pressure_systolic, ranges.bp_systolic)}
+                className={getInputClass(vitals.blood_pressure_systolic ?? undefined, ranges.bp_systolic)}
               />
               <div className="flex items-center px-2">
                 <Minus className="h-4 w-4 text-[#6B7280]" />
@@ -248,7 +248,7 @@ export const VitalsEntry: React.FC<VitalsEntryProps> = ({
                 value={vitals.blood_pressure_diastolic || ''}
                 onChange={(e) => setVitals({ ...vitals, blood_pressure_diastolic: parseInt(e.target.value) || undefined })}
                 placeholder="Diastolic"
-                className={getInputClass(vitals.blood_pressure_diastolic, ranges.bp_diastolic)}
+                className={getInputClass(vitals.blood_pressure_diastolic ?? undefined, ranges.bp_diastolic)}
               />
             </div>
             <p className="text-xs text-[#6B7280] mt-1">
@@ -267,7 +267,7 @@ export const VitalsEntry: React.FC<VitalsEntryProps> = ({
               value={vitals.heart_rate || ''}
               onChange={(e) => setVitals({ ...vitals, heart_rate: parseInt(e.target.value) || undefined })}
               placeholder="Heart rate"
-              className={`mt-2 ${getInputClass(vitals.heart_rate, ranges.heart_rate)}`}
+              className={`mt-2 ${getInputClass(vitals.heart_rate ?? undefined, ranges.heart_rate)}`}
             />
             <p className="text-xs text-[#6B7280] mt-1">
               Normal: {ranges.heart_rate.min}-{ranges.heart_rate.max} bpm
@@ -285,7 +285,7 @@ export const VitalsEntry: React.FC<VitalsEntryProps> = ({
               value={vitals.respiratory_rate || ''}
               onChange={(e) => setVitals({ ...vitals, respiratory_rate: parseInt(e.target.value) || undefined })}
               placeholder="Respiratory rate"
-              className={`mt-2 ${getInputClass(vitals.respiratory_rate, ranges.respiratory_rate)}`}
+              className={`mt-2 ${getInputClass(vitals.respiratory_rate ?? undefined, ranges.respiratory_rate)}`}
             />
             <p className="text-xs text-[#6B7280] mt-1">
               Normal: {ranges.respiratory_rate.min}-{ranges.respiratory_rate.max} breaths/min
@@ -304,7 +304,7 @@ export const VitalsEntry: React.FC<VitalsEntryProps> = ({
               value={vitals.temperature || ''}
               onChange={(e) => setVitals({ ...vitals, temperature: parseFloat(e.target.value) || undefined })}
               placeholder="Temperature"
-              className={`mt-2 ${getInputClass(vitals.temperature, ranges.temperature)}`}
+              className={`mt-2 ${getInputClass(vitals.temperature ?? undefined, ranges.temperature)}`}
             />
             <p className="text-xs text-[#6B7280] mt-1">
               Normal: {ranges.temperature.min}-{ranges.temperature.max}°C
@@ -322,7 +322,7 @@ export const VitalsEntry: React.FC<VitalsEntryProps> = ({
               value={vitals.oxygen_saturation || ''}
               onChange={(e) => setVitals({ ...vitals, oxygen_saturation: parseInt(e.target.value) || undefined })}
               placeholder="SpO2"
-              className={`mt-2 ${getInputClass(vitals.oxygen_saturation, ranges.oxygen_saturation)}`}
+              className={`mt-2 ${getInputClass(vitals.oxygen_saturation ?? undefined, ranges.oxygen_saturation)}`}
             />
             <p className="text-xs text-[#6B7280] mt-1">
               Normal: ≥{ranges.oxygen_saturation.min}%

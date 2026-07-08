@@ -183,3 +183,8 @@ export function ShimmerCard() {
  *   animation: shimmer 2s infinite;
  * }
  */
+import { cn } from "./utils";
+
+export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("animate-pulse rounded-md bg-muted", className)} {...props} />;
+}

@@ -123,105 +123,85 @@ export const aiTriageApi = {
     // For now, return mock
     return 'Transcription not implemented in development mode';
   },
+
+  /**
+   * Submit AI telemetry feedback to improve the model
+   */
+  async submitTelemetry(
+    assessmentId: string, 
+    originalLevel: string, 
+    actualOutcome: string, 
+    feedbackNotes: string, 
+    clinicianId: string
+  ): Promise<boolean> {
+    if (USE_MOCK_DATA) {
+      console.log('🎭 MOCK: AI Telemetry submitted', { assessmentId, originalLevel, actualOutcome });
+      return true;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('ai_telemetry')
+        .insert({
+          assessment_id: assessmentId,
+          original_level: originalLevel,
+          actual_outcome: actualOutcome,
+          feedback_notes: feedbackNotes,
+          created_by: clinicianId,
+        });
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Telemetry error:', error);
+      return false;
+    }
+  },
 };
 
 // ============================================================================
 // AI ANALYSIS ENGINE
 // ============================================================================
 
+import { performLocalTriage } from './localTriageEngine';
+
+// ... (keep the rest of the file intact, but replace the analyzeSymptoms function)
+
 async function analyzeSymptoms(input: TriageInput): Promise<TriageAssessment> {
-  // Rule-based triage (production would use OpenAI)
-  const symptoms = input.symptoms.map(s => s.toLowerCase());
+  // Use the local WebAssembly model for triage
+  const symptomsText = input.symptoms.join(', ') + (input.symptom_text ? `. ${input.symptom_text}` : '');
   
-  // Calculate risk score
-  let riskScore = 0;
-  let riskLevel: 'low' | 'medium' | 'high' = 'low';
-  let suggestedAction = '';
+  const vitals = input.vitals ? {
+    temp: input.vitals.temperature,
+    heartRate: input.vitals.heart_rate,
+    bloodPressure: input.vitals.blood_pressure
+  } : undefined;
+
+  const localResult = await performLocalTriage(symptomsText, vitals);
+
+  // Map the localTriageEngine result to TriageAssessment
+  let riskScore = 10;
+  if (localResult.level === 'emergency') riskScore = 90;
+  else if (localResult.level === 'urgent') riskScore = 70;
+  else if (localResult.level === 'moderate') riskScore = 40;
+
+  // Identify possible conditions (basic rule-based as fallback)
   let possibleConditions: string[] = [];
-  let carePathway = '';
-
-  // High-risk symptoms
-  const highRiskSymptoms = [
-    'chest pain', 'maumivu ya kifua',
-    'severe headache', 'maumivu makali ya kichwa',
-    'difficulty breathing', 'shida ya kupumua',
-    'unconscious', 'amezimia',
-    'bleeding', 'damu inatoka',
-    'severe abdominal pain', 'maumivu makali ya tumbo',
-  ];
-
-  // Medium-risk symptoms
-  const mediumRiskSymptoms = [
-    'fever', 'homa',
-    'vomiting', 'kutapika',
-    'diarrhea', 'kuhara',
-    'headache', 'maumivu ya kichwa',
-    'body aches', 'maumivu ya mwili',
-  ];
-
-  // Check vitals
-  if (input.vitals) {
-    if (input.vitals.temperature && input.vitals.temperature > 38.5) {
-      riskScore += 20;
-    }
-    if (input.vitals.blood_pressure) {
-      const systolic = parseInt(input.vitals.blood_pressure.split('/')[0]);
-      if (systolic > 140 || systolic < 90) {
-        riskScore += 25;
-      }
-    }
-    if (input.vitals.oxygen_saturation && input.vitals.oxygen_saturation < 95) {
-      riskScore += 30;
-    }
-  }
-
-  // Check symptoms
-  const hasHighRisk = symptoms.some(s => 
-    highRiskSymptoms.some(hrs => s.includes(hrs))
-  );
-
-  const hasMediumRisk = symptoms.some(s => 
-    mediumRiskSymptoms.some(mrs => s.includes(mrs))
-  );
-
-  if (hasHighRisk) {
-    riskScore += 50;
-  } else if (hasMediumRisk) {
-    riskScore += 30;
-  } else {
-    riskScore += 10;
-  }
-
-  // Determine risk level
-  if (riskScore >= 60) {
-    riskLevel = 'high';
-    suggestedAction = 'Emergency - Immediate doctor consultation required';
-    carePathway = 'Escalate to emergency department. Priority consultation.';
-  } else if (riskScore >= 30) {
-    riskLevel = 'medium';
-    suggestedAction = 'Doctor consultation recommended';
-    carePathway = 'Schedule consultation within 24 hours. Monitor vitals.';
-  } else {
-    riskLevel = 'low';
-    suggestedAction = 'Self-care or pharmacy consultation';
-    carePathway = 'OTC medication may be sufficient. Follow up if symptoms persist.';
-  }
-
-  // Identify possible conditions (rule-based)
-  if (symptoms.includes('fever') || symptoms.includes('homa')) {
-    if (symptoms.includes('headache') || symptoms.includes('maumivu ya kichwa')) {
+  const lowerSymptoms = symptomsText.toLowerCase();
+  if (lowerSymptoms.includes('fever') || lowerSymptoms.includes('homa')) {
+    if (lowerSymptoms.includes('headache') || lowerSymptoms.includes('maumivu ya kichwa')) {
       possibleConditions.push('Malaria', 'Typhoid', 'Viral infection');
     } else {
       possibleConditions.push('Viral infection', 'Bacterial infection');
     }
   }
 
-  if (symptoms.includes('cough') || symptoms.includes('kikohozi')) {
+  if (lowerSymptoms.includes('cough') || lowerSymptoms.includes('kikohozi')) {
     possibleConditions.push('Upper respiratory infection', 'Pneumonia', 'TB (if persistent)');
   }
 
-  if (symptoms.includes('vomiting') || symptoms.includes('kutapika')) {
-    if (symptoms.includes('diarrhea') || symptoms.includes('kuhara')) {
+  if (lowerSymptoms.includes('vomiting') || lowerSymptoms.includes('kutapika')) {
+    if (lowerSymptoms.includes('diarrhea') || lowerSymptoms.includes('kuhara')) {
       possibleConditions.push('Gastroenteritis', 'Food poisoning', 'Cholera');
     }
   }
@@ -230,16 +210,24 @@ async function analyzeSymptoms(input: TriageInput): Promise<TriageAssessment> {
     possibleConditions.push('General consultation needed');
   }
 
+  // Use the reasoning from the model as well
+  const carePathway = `${localResult.recommendation} ${localResult.reasoning.join('. ')}`;
+
+  // Map levels
+  const mappedLevel = localResult.level === 'emergency' || localResult.level === 'urgent' ? 'high' 
+                    : localResult.level === 'moderate' ? 'medium' 
+                    : 'low';
+
   return {
-    id: 'temp-' + Date.now(),
+    id: 'triage-' + Date.now(),
     patient_id: input.patient_id,
     patient_name: input.patient_name,
     symptoms: input.symptoms,
     symptom_text: input.symptom_text,
     language: input.language,
-    risk_level: riskLevel,
+    risk_level: mappedLevel,
     risk_score: riskScore,
-    suggested_action: suggestedAction,
+    suggested_action: localResult.recommendation,
     possible_conditions: possibleConditions,
     care_pathway: carePathway,
     vitals: input.vitals,

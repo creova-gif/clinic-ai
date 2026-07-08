@@ -162,6 +162,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
   const [showResults, setShowResults] = useState(false);
   const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTriaging, setIsTriaging] = useState(false);
 
   // Autosave answers (Phase 1 requirement - crash recovery)
   useEffect(() => {
@@ -194,7 +195,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
     try {
       const response = await api.symptomAssessments.create({
         user_id: undefined,
-        session_id: assessment.auditId,
+        session_id: assessment.auditId || crypto.randomUUID(),
         symptoms: answers,
         triage_result: assessment,
         language: language,
@@ -207,6 +208,26 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
       // background logging - don't surface to user
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const executeTriage = async (finalAnswers: SymptomAnswer[]) => {
+    setIsTriaging(true);
+    try {
+      const transcript = finalAnswers.map(a => `${a.questionId}: ${a.answer}`).join('\n');
+      const result = await ClinicalTriageEngine.assessSymptomsWithAI(transcript, language);
+      
+      saveAssessment(result, finalAnswers);
+      setTriageResult(result);
+      setShowResults(true);
+
+      if (result.level === 'emergency' || result.level === 'urgent') {
+        navigator.vibrate?.([200, 100, 200]);
+      }
+
+      sessionStorage.removeItem('symptom_checker_autosave');
+    } finally {
+      setIsTriaging(false);
     }
   };
 
@@ -224,19 +245,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
     if (currentQuestion < questions.length - 1) {
       setTimeout(() => setCurrentQuestion(currentQuestion + 1), 200);
     } else {
-      const result = ClinicalTriageEngine.assessSymptoms(updatedAnswers, language);
-
-      ClinicalTriageEngine.logAssessment(result.auditId, updatedAnswers, result);
-      saveAssessment(result, updatedAnswers);
-      setTriageResult(result);
-      setShowResults(true);
-
-      // Haptic feedback for high-risk
-      if (result.level === 'emergency' || result.level === 'urgent') {
-        navigator.vibrate?.([200, 100, 200]);
-      }
-
-      sessionStorage.removeItem('symptom_checker_autosave');
+      executeTriage(updatedAnswers);
     }
   };
 
@@ -244,12 +253,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      const result = ClinicalTriageEngine.assessSymptoms(answers, language);
-      ClinicalTriageEngine.logAssessment(result.auditId, answers, result);
-      saveAssessment(result, answers);
-      setTriageResult(result);
-      setShowResults(true);
-      sessionStorage.removeItem('symptom_checker_autosave');
+      executeTriage(answers);
     }
   };
 
@@ -392,7 +396,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                   {(triageResult.level === 'emergency' || triageResult.level === 'urgent') && (
                     <AlertTriangle className="w-8 h-8 text-white" />
                   )}
-                  {(triageResult.level === 'routine' || triageResult.level === 'self-care') && (
+                  {(triageResult.level === 'moderate' || triageResult.level === 'mild') && (
                     <Info className="w-8 h-8 text-white" />
                   )}
                 </div>
@@ -547,11 +551,11 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                         {language === 'sw' ? 'Pata Maelekezo' : 'Get Directions'}
                       </MedicalButton>
                       <div className="grid grid-cols-2 gap-2">
-                        <MedicalButton variant="outline" size="md" className="flex-1">
+                        <MedicalButton variant="secondary" size="md" className="flex-1">
                           <Phone className="w-4 h-4" />
                           {language === 'sw' ? 'Piga Simu' : 'Call'}
                         </MedicalButton>
-                        <MedicalButton variant="outline" size="md" className="flex-1">
+                        <MedicalButton variant="secondary" size="md" className="flex-1">
                           <Info className="w-4 h-4" />
                           {language === 'sw' ? 'Maelezo' : 'Details'}
                         </MedicalButton>
@@ -621,18 +625,18 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
           )}
 
           {/* Disclaimers */}
-          {triageResult.disclaimers.length > 0 && (
+          {(triageResult.disclaimers?.length ?? 0) > 0 && (
             <div className="p-4 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]">
               <details className="group">
                 <summary className="flex items-center gap-2.5 cursor-pointer list-none hover:opacity-75 transition-opacity">
                   <Info className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
                   <span className="font-semibold text-sm text-[#1A1D23] flex-1">
-                    {t.disclaimer} ({triageResult.disclaimers.length})
+                    {t.disclaimer} ({triageResult.disclaimers?.length})
                   </span>
                   <ChevronLeft className="w-4 h-4 text-[#6B7280] transition-transform group-open:rotate-[-90deg]" />
                 </summary>
                 <ul className="mt-3 space-y-2 pl-6">
-                  {triageResult.disclaimers.map((disclaimer, idx) => (
+                  {triageResult.disclaimers?.map((disclaimer, idx) => (
                     <li key={idx} className="text-xs text-[#6B7280] leading-relaxed flex items-start gap-2">
                       <span className="text-[#9CA3AF] mt-0.5">•</span>
                       <span className="flex-1">{disclaimer}</span>
@@ -666,15 +670,14 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
   const currentQ = questions[currentQuestion];
   const currentStep = currentQuestion + 1;
 
+  useEffect(() => {
+    if (!currentQ && !showResults && answers.length > 0 && !isTriaging) {
+      executeTriage(answers);
+    }
+  }, [currentQ, showResults, answers, isTriaging]);
+
   // Safety check - if no current question, trigger results
   if (!currentQ) {
-    if (!showResults && answers.length > 0) {
-      const result = ClinicalTriageEngine.assessSymptoms(answers, language);
-      ClinicalTriageEngine.logAssessment(result.auditId, answers, result);
-      setTriageResult(result);
-      setShowResults(true);
-      sessionStorage.removeItem('symptom_checker_autosave');
-    }
     return null;
   }
 
@@ -697,9 +700,9 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
         className="px-4 pt-3"
         aria-label={`Hatua ${currentStep} kati ya ${totalSteps}`}
         role="progressbar"
-        aria-valuenow={String(currentStep)}
-        aria-valuemin={String(1)}
-        aria-valuemax={String(totalSteps)}
+        aria-valuenow={currentStep}
+        aria-valuemin={1}
+        aria-valuemax={totalSteps}
       >
         <div className="flex gap-1.5">
           {Array.from({ length: totalSteps }, (_, i) => (

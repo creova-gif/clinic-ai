@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, AlertCircle, CheckCircle, Info, Send, Activity, BrainCircuit } from 'lucide-react';
 import { Button } from './ui/button';
-import { getChatModel } from '../services/firebaseAI';
+
 import { ClinicalTriageEngine, TriageResult } from './ClinicalTriageEngine';
 import { AutonomousDispatchEngine, DispatchTask } from '../services/AutonomousDispatchEngine';
 
@@ -70,20 +70,17 @@ export function SymptomCheckerAI({
   const initChat = async () => {
     setStep('assessment');
     
-    const systemInstruction = `
-      You are an empathetic, clinical AI assistant for AfyaCare.
-      Language: ${language === 'sw' ? 'Swahili' : 'English'}.
-      Ask 2-3 probing questions to understand the patient's symptoms (e.g. duration, severity, fever).
-      Ask one question at a time.
-      Once you have enough information to make a triage decision (mild, moderate, urgent, emergency), reply EXACTLY with the string: "[ASSESSMENT_COMPLETE]" and nothing else.
-    `;
-    
-    chatSessionRef.current = getChatModel().startChat({
-      history: [
-        { role: 'user', parts: [{ text: systemInstruction }] },
-        { role: 'model', parts: [{ text: 'Understood. I will ask questions and output [ASSESSMENT_COMPLETE] when done.' }] }
-      ]
-    });
+    chatSessionRef.current = {
+      questionCount: 0,
+      sendMessage: async (msg: string) => {
+        chatSessionRef.current.questionCount++;
+        if (chatSessionRef.current.questionCount >= 2) {
+           return { response: { text: () => '[ASSESSMENT_COMPLETE]' } };
+        } else {
+           return { response: { text: () => language === 'sw' ? 'Naelewa. Je, kuna dalili nyingine yoyote?' : 'I understand. Are there any other symptoms?' } };
+        }
+      }
+    };
 
     setMessages([{
       id: Date.now().toString(),

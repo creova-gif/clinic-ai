@@ -39,9 +39,9 @@ export async function performLocalTriage(
   const model = await initLocalTriageModel();
 
   const labels = ['emergency', 'urgent', 'moderate', 'mild'];
-  const text = \`Patient symptoms: \${symptoms}. \${
-    vitals ? \`Vitals: Temp \${vitals.temp}C, HR \${vitals.heartRate}bpm, BP \${vitals.bloodPressure}\` : ''
-  }\`;
+  const text = `Patient symptoms: ${symptoms}. ${
+    vitals ? `Vitals: Temp ${vitals.temp}C, HR ${vitals.heartRate}bpm, BP ${vitals.bloodPressure}` : ''
+  }`;
 
   const result = await model(text, labels);
 
@@ -67,7 +67,7 @@ export async function performLocalTriage(
     confidence,
     recommendation,
     reasoning: [
-      \`Model classified as \${topLabel} with \${Math.round(topScore * 100)}% confidence.\`
+      `Model classified as ${topLabel} with ${Math.round(topScore * 100)}% confidence.`
     ],
     redFlags,
     escalationRequired: topLabel === 'emergency' || topLabel === 'urgent',

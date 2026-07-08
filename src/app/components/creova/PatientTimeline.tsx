@@ -13,7 +13,7 @@
  */
 
 import { useState } from 'react';
-import { Activity, Pill, Flask, Heart, Stethoscope, Package, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Activity, Pill, Beaker as Flask, Heart, Stethoscope, Package, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 
 const COLORS = {
   primary: '#0F3D56',

@@ -92,7 +92,7 @@ export function LanguageToggle({
 
   const hoverStyle: React.CSSProperties = {
     backgroundColor: colors.primary[50],
-    borderColor: colors.primary[300],
+    borderColor: colors.primary[500],
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   };
 

@@ -87,7 +87,7 @@ export const SOAPDocumentation: React.FC<SOAPDocumentationProps> = ({
   const [aiSuggestions, setAiSuggestions] = useState(existingNote?.ai_suggestions || []);
   
   // State
-  const [status, setStatus] = useState<'draft' | 'signed' | 'amended'>(existingNote?.status || 'draft');
+  const [status, setStatus] = useState<'draft' | 'signed' | 'amended' | 'archived'>(existingNote?.status || 'draft');
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(existingNote?.updated_at || null);
   const [showSignModal, setShowSignModal] = useState(false);

@@ -72,9 +72,9 @@ export function HealthAssistant({
   const [showEmergency, setShowEmergency] = useState(false);
   const [showGuidance, setShowGuidance] = useState(false);
   const [guidance, setGuidance] = useState<{
-    urgency: 'emergency' | 'urgent' | 'routine';
+    urgency: string;
     recommendation: string;
-    nextSteps: string[];
+    steps: string[];
   } | null>(null);
 
   const content = {
@@ -270,8 +270,8 @@ export function HealthAssistant({
 
   const handleAnswer = (optionId: string) => {
     const selectedOption = currentQuestion.options.find(
-      (opt) => opt.id === optionId
-    );
+      (opt: any) => opt.id === optionId
+    ) as any;
 
     // Check for red flag symptoms
     if (selectedOption?.isRedFlag) {
@@ -336,7 +336,7 @@ export function HealthAssistant({
             <MedicalButton
               variant="danger"
               size="lg"
-              onClick={() => (window.location.href = 'tel:112')}
+              onClick={() => { window.location.href = 'tel:112'; }}
               icon={<PhoneIcon size={24} color="#FFFFFF" />}
               fullWidth
               className="h-16 text-lg"
@@ -444,7 +444,7 @@ export function HealthAssistant({
             </div>
 
             <div className="space-y-3">
-              {guidance.nextSteps.map((step, i) => (
+              {guidance.steps.map((step: string, i: number) => (
                 <div key={i} className="flex items-start gap-3">
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -604,7 +604,7 @@ export function HealthAssistant({
           <div className="space-y-3">
             <p className="text-sm font-medium text-[#6B7280]">{t.selectAnswer}</p>
 
-            {currentQuestion.options.map((option, index) => (
+            {currentQuestion.options.map((option: any, index: number) => (
               <motion.button
                 key={option.id}
                 onClick={() => handleAnswer(option.id)}

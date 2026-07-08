@@ -122,10 +122,11 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
       <OfflineBanner />
       
       <HeroHeader 
-        title={t.title}
+        name={t.title}
         subtitle={`${t.visits}: ${stats.visitedToday} / ${stats.targetToday}`}
-        icon={<Users className="w-6 h-6 text-white" />}
-        action={
+      >
+        <div className="flex items-center justify-between">
+          <Users className="w-6 h-6 text-white" />
           <button
             onClick={onBack}
             className="flex items-center justify-center p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
@@ -133,8 +134,8 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-        }
-      />
+        </div>
+      </HeroHeader>
 
       <div className="max-w-4xl mx-auto px-4 -mt-6 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

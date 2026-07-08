@@ -22,6 +22,7 @@ import {
   PhoneIcon,
   LocationIcon,
   ChevronLeftIcon,
+  ChevronRightIcon,
   InfoIcon,
 } from './icons/MedicalIcons';
 import { MedicalButton } from './ui/medical-button';

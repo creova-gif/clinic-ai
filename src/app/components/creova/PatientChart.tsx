@@ -33,6 +33,7 @@ const COLORS = {
   neutral200: '#E5E7EB',
   neutral300: '#D1D5DB',
   neutral400: '#9CA3AF',
+  neutral500: '#6B7280',
   neutral600: '#4B5563',
   neutral700: '#374151',
   neutral800: '#1F2937',
@@ -414,6 +415,12 @@ export default function PatientChart() {
     pregnant: true,
     gestationWeeks: 28,
   };
+
+  const tabs: Array<{ id: 'summary' | 'history' | 'admin', label: string, labelSw: string, icon: string }> = [
+    { id: 'summary', label: 'Summary', labelSw: 'Muhtasari', icon: '📋' },
+    { id: 'history', label: 'History', labelSw: 'Historia', icon: '🕒' },
+    { id: 'admin', label: 'Admin', labelSw: 'Utawala', icon: '⚙️' },
+  ];
 
   return (
     <div style={{

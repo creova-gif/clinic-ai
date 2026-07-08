@@ -495,13 +495,32 @@ CREATE TABLE IF NOT EXISTS chw_dispatch_tasks (
 ALTER TABLE chw_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chw_dispatch_tasks ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can view chw_profiles"
+CREATE POLICY "Anyone can view active chw_profiles"
   ON chw_profiles FOR SELECT
-  USING (true);
+  USING (active = true);
 
-CREATE POLICY "Anyone can manage chw_dispatch_tasks"
+CREATE POLICY "Clinicians can manage chw_dispatch_tasks"
   ON chw_dispatch_tasks FOR ALL
-  USING (true);
+  USING (is_clinician() OR is_admin());
+
+-- ============================================
+-- TABLE: ai_telemetry
+-- ============================================
+CREATE TABLE IF NOT EXISTS ai_telemetry (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  assessment_id UUID,
+  original_level TEXT,
+  actual_outcome TEXT,
+  feedback_notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by TEXT
+);
+
+ALTER TABLE ai_telemetry ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Clinicians can insert and view ai_telemetry"
+  ON ai_telemetry FOR ALL
+  USING (is_clinician() OR is_admin());
 
 INSERT INTO chw_profiles (id, user_id, name, languages, active, current_location) VALUES 
   ('11111111-1111-1111-1111-111111111111', 'chw-user-1', 'Asha Suleiman', ARRAY['sw', 'en'], true, '{"lat": -6.79, "lng": 39.20}'),

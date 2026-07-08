@@ -358,17 +358,17 @@ export class FHIRConverter {
         family: patient.last_name,
         given: [patient.first_name, patient.middle_name].filter(Boolean) as string[]
       }],
-      telecom: patient.phone_number ? [{
+      telecom: patient.phone_primary ? [{
         system: 'phone',
-        value: patient.phone_number,
+        value: patient.phone_primary,
         use: 'mobile'
       }] : undefined,
-      gender: patient.sex === 'male' ? 'male' : patient.sex === 'female' ? 'female' : 'other',
+      gender: patient.gender === 'male' ? 'male' : patient.gender === 'female' ? 'female' : 'other',
       birthDate: patient.date_of_birth.toISOString().split('T')[0],
-      address: patient.address ? [{
+      address: patient.street_address ? [{
         use: 'home',
         type: 'physical',
-        text: patient.address,
+        text: patient.street_address,
         district: patient.district,
         state: patient.region,
         country: 'Tanzania'
@@ -383,10 +383,10 @@ export class FHIRConverter {
     const observations: FHIRObservation[] = [];
 
     // Blood Pressure
-    if (vitals.blood_pressure_systolic && vitals.blood_pressure_diastolic) {
+      if (vitals.blood_pressure_systolic && vitals.blood_pressure_diastolic) {
       observations.push({
         resourceType: 'Observation',
-        id: `${vitals.vital_id}-bp`,
+        id: `${vitals.vitals_id}-bp`,
         status: 'final',
         category: [{
           coding: [{
@@ -413,7 +413,7 @@ export class FHIRConverter {
     if (vitals.temperature) {
       observations.push({
         resourceType: 'Observation',
-        id: `${vitals.vital_id}-temp`,
+        id: `${vitals.vitals_id}-temp`,
         status: 'final',
         category: [{
           coding: [{
@@ -462,18 +462,18 @@ export class FHIRConverter {
       code: {
         coding: [{
           system: 'http://loinc.org',
-          code: result.loinc_code || '',
+          code: result.test_name || '',
           display: result.test_name
         }],
         text: result.test_name
       },
       subject: { reference: `Patient/${patientId}`, display: '' },
-      effectiveDateTime: result.result_date.toISOString(),
+      effectiveDateTime: result.performed_at.toISOString(),
       valueQuantity: typeof result.result_value === 'number' ? {
         value: result.result_value,
-        unit: result.unit || '',
+        unit: result.result_unit || '',
         system: 'http://unitsofmeasure.org',
-        code: result.unit || ''
+        code: result.result_unit || ''
       } : undefined,
       valueString: typeof result.result_value === 'string' ? result.result_value : undefined,
       interpretation: result.interpretation ? [{
@@ -497,18 +497,18 @@ export class FHIRConverter {
       intent: 'order',
       medicationCodeableConcept: {
         coding: [],
-        text: rx.medication_name
+        text: rx.drug_name
       },
       subject: { reference: `Patient/${patientId}`, display: '' },
       encounter: { reference: `Encounter/${encounterId}` },
-      authoredOn: rx.prescribed_date.toISOString(),
-      requester: { reference: `Practitioner/${rx.prescriber_id}`, display: '' },
+      authoredOn: rx.prescribed_at.toISOString(),
+      requester: { reference: `Practitioner/${rx.prescribed_by_user_id}`, display: '' },
       dosageInstruction: [{
         text: rx.instructions
       }],
       dispenseRequest: {
         quantity: {
-          value: rx.quantity,
+          value: rx.quantity_prescribed,
           unit: 'tablets'
         }
       }

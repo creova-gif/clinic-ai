@@ -120,7 +120,7 @@ export function FirstAhaMoment({ language, role, onComplete }: FirstAhaMomentPro
   const [answer1, setAnswer1] = useState('');
   const [answer2, setAnswer2] = useState('');
   const [showResult, setShowResult] = useState(false);
-  const t = translations[language][role];
+  const t = translations[language][role] as any;
 
   const handleAnswer1 = (value: string) => {
     setAnswer1(value);

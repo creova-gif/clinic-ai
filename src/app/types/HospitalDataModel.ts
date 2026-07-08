@@ -447,6 +447,31 @@ export interface QueueEntry {
   updated_at: Date;
 }
 
+export interface Referral {
+  referral_id: string;
+  patient_id: string;
+  encounter_id: string;
+  referring_facility_id: string;
+  receiving_facility_id: string;
+  referring_provider_id: string;
+  receiving_provider_id: string | null;
+  referral_date: Date;
+  reason: string;
+  urgency: 'emergency' | 'urgent' | 'routine';
+  status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
+  clinical_summary: string;
+  diagnosis: string;
+  specialty_needed: string;
+  transport_required: boolean;
+  patient_condition: 'stable' | 'unstable' | 'critical';
+  expected_arrival: Date | null;
+  actual_arrival: Date | null;
+  outcome: string | null;
+  notes: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 // ===========================================
 // 8. FACILITY MANAGEMENT
 // ===========================================
@@ -556,7 +581,7 @@ export interface AuditLog {
   
   // What
   action: 'create' | 'read' | 'update' | 'delete' | 'sign' | 'verify' | 'dispense' | 'merge' | 'export';
-  entity_type: 'patient' | 'encounter' | 'note' | 'prescription' | 'lab-order' | 'lab-result' | 'user' | 'facility';
+  entity_type: 'patient' | 'encounter' | 'note' | 'prescription' | 'lab-order' | 'lab-result' | 'user' | 'facility' | 'vital_signs' | 'referral' | 'queue_entry' | 'drug';
   entity_id: string;
   
   // When

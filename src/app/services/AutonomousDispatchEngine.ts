@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { getDispatchModel } from './firebaseAI';
 
 export interface DispatchTask {
   id: string;
@@ -33,39 +32,15 @@ export class AutonomousDispatchEngine {
         return null;
       }
 
-      // 2. Ask AI to determine the best match
-      const prompt = `
-        You are an autonomous medical dispatcher for AfyaCare.
-        An URGENT triage has occurred. Assign the best Community Health Worker (CHW).
-        
-        Patient Info:
-        - Location: ${JSON.stringify(patientInfo.location)}
-        - Language Preference: ${patientInfo.language}
-        - Triage Reasoning: ${JSON.stringify(triageResult.reasoning)}
+      // 2. Simple local matching instead of AI
+      // Prioritize language match
+      let bestChw = chws.find(chw => chw.languages && chw.languages.includes(patientInfo.language));
+      if (!bestChw) bestChw = chws[0];
 
-        Available CHWs:
-        ${JSON.stringify(chws.map(chw => ({
-          id: chw.id,
-          name: chw.name,
-          languages: chw.languages,
-          location: chw.current_location
-        })), null, 2)}
-        
-        Rules:
-        1. Prioritize language match.
-        2. Prioritize geographic proximity.
-        
-        Return exactly a JSON object matching the requested schema.
-      `;
-
-      const dispatchModel = getDispatchModel();
-      const response = await dispatchModel.generateContent(prompt);
-      const text = response.response.text();
-      const aiDecision = JSON.parse(text);
-
-      if (!aiDecision.chw_id) {
-        throw new Error('AI failed to assign a CHW ID');
-      }
+      const aiDecision = {
+        chw_id: bestChw.id,
+        reasoning: `Matched locally with CHW ${bestChw.name} based on availability and language constraints.`
+      };
 
       // 3. Insert the dispatch task into the database
       const { data: task, error: insertError } = await supabase

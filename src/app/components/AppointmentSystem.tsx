@@ -315,8 +315,8 @@ export function AppointmentSystem({ language, onBack }: AppointmentSystemProps) 
       if (response.success && response.data) {
         toast.success(
           language === 'sw'
-            ? `Miadi imepangwa! ${bookingData.facility.name_sw} - ${bookingData.date} ${bookingData.time}`
-            : `Appointment booked! ${bookingData.facility.name} - ${bookingData.date} ${bookingData.time}`
+            ? `Miadi imepangwa! ${bookingData.facility.name.sw} - ${bookingData.date} ${bookingData.time}`
+            : `Appointment booked! ${bookingData.facility.name.en} - ${bookingData.date} ${bookingData.time}`
         );
 
         // Reset and return to list

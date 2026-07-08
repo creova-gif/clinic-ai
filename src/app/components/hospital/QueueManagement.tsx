@@ -43,7 +43,7 @@ import type { QueueEntry, Patient, Encounter } from '../../types/HospitalDataMod
 interface QueueManagementProps {
   facilityId: string;
   department?: string;
-  userRole: 'receptionist' | 'nurse' | 'doctor' | 'admin';
+  userRole: 'receptionist' | 'nurse' | 'doctor' | 'admin' | 'clinical-officer' | 'pharmacist' | 'lab-tech' | 'moh-admin';
 }
 
 export const QueueManagement: React.FC<QueueManagementProps> = ({
@@ -163,7 +163,7 @@ export const QueueManagement: React.FC<QueueManagementProps> = ({
           referred_from_facility_id: null,
           referred_to_facility_id: null,
           referral_reason: null,
-          disposition: null,
+          disposition: null as any,
           follow_up_date: null,
           created_at: new Date(),
           updated_at: new Date(),
@@ -229,7 +229,7 @@ export const QueueManagement: React.FC<QueueManagementProps> = ({
           mpi_id: 'mpi-002',
           facility_id: facilityId,
           department: 'OPD',
-          provider_id: null,
+          provider_id: null as any,
           encounter_type: 'outpatient',
           status: 'checked-in',
           priority: 'routine',
@@ -246,7 +246,7 @@ export const QueueManagement: React.FC<QueueManagementProps> = ({
           referred_from_facility_id: null,
           referred_to_facility_id: null,
           referral_reason: null,
-          disposition: null,
+          disposition: null as any,
           follow_up_date: null,
           created_at: new Date(),
           updated_at: new Date(),

@@ -21,6 +21,15 @@ import { Button } from './ui/button';
 import { api } from '@/app/services/api';
 import type { Facility as ApiFacility } from '@/app/services/supabase';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+
+const SERVICES = [
+  { id: 'all', label: 'All' },
+  { id: 'emergency', label: 'Emergency' },
+  { id: 'maternity', label: 'Maternity' },
+  { id: 'pediatrics', label: 'Pediatrics' },
+  { id: 'general', label: 'General Practice' },
+];
 
 const translations = {
   sw: {
@@ -258,7 +267,7 @@ export function FacilityFinder({ onBack }: { onBack: () => void }) {
       <div className="bg-white border-b border-gray-200 overflow-x-auto">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex gap-2">
-            {services.map((service) => (
+            {SERVICES.map((service) => (
               <button
                 key={service.id}
                 onClick={() => setSelectedService(service.id)}
@@ -384,7 +393,7 @@ export function FacilityFinder({ onBack }: { onBack: () => void }) {
                           key={service}
                           className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium"
                         >
-                          {services.find((s) => s.id === service)?.label || service}
+                          {SERVICES.find((s) => s.id === service)?.label || service}
                         </span>
                       ))}
                     </div>

@@ -39,7 +39,7 @@ export const TRANSITION_DURATION = {
 };
 
 // Easing curves (medical-grade, no bounce)
-export const EASING = {
+export const EASING: Record<string, [number, number, number, number]> = {
   standard: [0.4, 0.0, 0.2, 1], // Standard Material easing
   decelerate: [0.0, 0.0, 0.2, 1], // Decelerate
   accelerate: [0.4, 0.0, 1, 1], // Accelerate

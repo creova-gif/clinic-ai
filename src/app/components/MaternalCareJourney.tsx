@@ -325,21 +325,13 @@ export function MaternalCareJourney({
             <div className="flex gap-2">
               <button
                 onClick={() => setMode('pregnancy')}
-                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  mode === 'pregnancy'
-                    ? 'bg-[#EC4899] text-white'
-                    : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]'
-                }`}
+                className="flex-1 py-3 rounded-lg text-sm font-medium transition-colors bg-[#EC4899] text-white"
               >
                 {t.tabs.pregnancy}
               </button>
               <button
                 onClick={() => setMode('child')}
-                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  mode === 'child'
-                    ? 'bg-[#EC4899] text-white'
-                    : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]'
-                }`}
+                className="flex-1 py-3 rounded-lg text-sm font-medium transition-colors bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
               >
                 {t.tabs.child}
               </button>
@@ -597,21 +589,13 @@ export function MaternalCareJourney({
           <div className="flex gap-2">
             <button
               onClick={() => setMode('pregnancy')}
-              className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
-                mode === 'pregnancy'
-                  ? 'bg-[#EC4899] text-white'
-                  : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]'
-              }`}
+              className="flex-1 py-3 rounded-lg text-sm font-medium transition-colors bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
             >
               {t.tabs.pregnancy}
             </button>
             <button
               onClick={() => setMode('child')}
-              className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
-                mode === 'child'
-                  ? 'bg-[#EC4899] text-white'
-                  : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]'
-              }`}
+              className="flex-1 py-3 rounded-lg text-sm font-medium transition-colors bg-[#EC4899] text-white"
             >
               {t.tabs.child}
             </button>

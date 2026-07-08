@@ -8,7 +8,7 @@
  * that reasons over the patient's entire unstructured transcript.
  */
 
-import { getTriageModel } from '../services/firebaseAI';
+import { performLocalTriage } from '../services/localTriageEngine';
 import { supabase } from '../services/supabase';
 
 export interface SymptomAnswer {
@@ -40,33 +40,15 @@ export class ClinicalTriageEngine {
     chatTranscript: string,
     language: 'sw' | 'en'
   ): Promise<TriageResult> {
-    
-    // Create the system prompt enforcing WHO guidelines
-    const systemInstruction = `
-      You are a clinical triage reasoning engine following WHO IMAI and Tanzania National Guidelines.
-      Analyze the following patient chat transcript and determine the triage level.
-      Output strictly the JSON schema requested.
-      Language preference for recommendation: ${language}
-      
-      CRITICAL EMERGENCY EXAMPLES: chest pain, difficulty breathing, coughing blood, unconsciousness, severe bleeding.
-      If emergency, set callEmergency to true.
-    `;
-
-    const model = getTriageModel();
-    
     try {
-      const response = await model.generateContent([
-        { text: systemInstruction },
-        { text: `Patient Transcript:\n${chatTranscript}` }
-      ]);
+      const localResult = await performLocalTriage(chatTranscript);
       
-      const responseText = response.response.text();
-      const resultData = JSON.parse(responseText) as TriageResult;
-      
-      // Inject standard disclaimers post-generation
-      resultData.disclaimers = this.getDisclaimers(language, resultData.level);
-      resultData.nearestFacility = 'Mwananyamala Hospital - 2.3 km'; // Mocked for now
-      resultData.auditId = `triage_ai_${Date.now()}`;
+      const resultData: TriageResult = {
+        ...localResult,
+        disclaimers: this.getDisclaimers(language, localResult.level),
+        nearestFacility: 'Mwananyamala Hospital - 2.3 km', // Mocked for now
+        auditId: `triage_ai_${Date.now()}`
+      };
       
       return resultData;
       

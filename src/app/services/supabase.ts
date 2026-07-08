@@ -185,6 +185,18 @@ export type Database = {
         Update: any;
         Relationships: [];
       };
+      ai_telemetry: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
+      triage_outcomes_feedback: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

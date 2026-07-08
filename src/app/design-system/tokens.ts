@@ -24,6 +24,7 @@ export const colors = {
   primary: {
     50: '#EFF6FF',
     100: '#DBEAFE',
+    200: '#BFDBFE',
     500: '#1E88E5', // Main primary color
     600: '#1976D2',
     700: '#1565C0',

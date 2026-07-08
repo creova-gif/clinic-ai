@@ -12,7 +12,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowRight, ArrowLeft, Check, Edit2, User, Activity, Target } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Edit2, User, Activity, Target, Shield, FileText } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface IntakeData {
   // Step 1: Identity

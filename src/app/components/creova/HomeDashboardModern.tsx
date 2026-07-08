@@ -52,10 +52,12 @@ const COLORS = {
   gray50: '#FAFBFC',
   gray100: '#F4F6F8',
   gray200: '#E8EBF0',
+  gray700: '#334155',
+  gray800: '#1E293B',
   gray300: '#D4D9E1',
   gray400: '#99A3B3',
   gray600: '#5C677D',
-  gray700: '#404B5A',
+
   gray900: '#1A202C',
   
   // Status colors

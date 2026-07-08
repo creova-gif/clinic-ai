@@ -71,7 +71,7 @@ export const MedicalButton: React.FC<MedicalButtonProps> = ({
   const reducedMotion = prefersReducedMotion();
 
   // Variant styles
-  const variantStyles = {
+  const variantStyles: Record<string, { bg: string, text: string, hover: string, active: string, border?: string }> = {
     primary: {
       bg: '#0F3D56',
       text: '#FFFFFF',

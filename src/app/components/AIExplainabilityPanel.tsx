@@ -3,6 +3,7 @@ import { Brain, CheckCircle, AlertCircle, Info, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Progress } from '@/app/components/ui/progress';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
+import { Badge } from '@/app/components/ui/badge';
 
 interface AIExplanation {
   confidence: number;

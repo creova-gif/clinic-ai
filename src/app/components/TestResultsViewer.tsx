@@ -40,7 +40,47 @@ interface TestResult {
 }
 
 export function TestResultsViewer({ language, onBack }: TestResultsViewerProps) {
-  const t = (k: string) => k;
+  const translations = {
+    sw: {
+      status: 'Hali',
+      normal: 'Kawaida',
+      abnormal: 'Sio Kawaida',
+      pending: 'Tunasubiri',
+      testedAt: 'Imepimwa Kwenye',
+      result: 'Matokeo',
+      contactDoctor: 'Wasiliana na Daktari',
+      download: 'Pakua',
+      share: 'Shiriki',
+      normalRange: 'Kiwango cha Kawaida',
+      noResults: 'Hakuna Matokeo',
+      noResultsMessage: 'Hakuna matokeo ya vipimo yaliyopatikana kwa mgonjwa huyu.',
+      recent: 'Matokeo ya Hivi Karibuni',
+      viewDetails: 'Angalia Maelezo',
+      high: 'Juu',
+      low: 'Chini',
+      title: 'Matokeo ya Vipimo',
+    },
+    en: {
+      status: 'Status',
+      normal: 'Normal',
+      abnormal: 'Abnormal',
+      pending: 'Pending',
+      testedAt: 'Tested At',
+      result: 'Result',
+      contactDoctor: 'Contact Doctor',
+      download: 'Download',
+      share: 'Share',
+      normalRange: 'Normal Range',
+      noResults: 'No Results',
+      noResultsMessage: 'No test results found for this patient.',
+      recent: 'Recent Test Results',
+      viewDetails: 'View Details',
+      high: 'High',
+      low: 'Low',
+      title: 'Test Results',
+    }
+  };
+  const t = translations[language];
   const [selectedResult, setSelectedResult] = useState<TestResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [testResults, setTestResults] = useState<ApiTestResult[]>([]);
@@ -401,7 +441,7 @@ export function TestResultsViewer({ language, onBack }: TestResultsViewerProps) 
                     <span 
                       className="absolute inset-0 rounded-xl animate-ping"
                       style={{ 
-                        backgroundColor: colors.danger[400],
+                        backgroundColor: colors.danger[300],
                         opacity: 0.3,
                         animationDuration: '1.5s'
                       }}

@@ -382,7 +382,7 @@ export function ConsentManagement({
             content={t.steps.categories}
             categories={categories}
             selectedCategories={decision.categories || []}
-            onSelect={(cats) => setDecision({ ...decision, categories: cats })}
+            onSelect={(cats: string[]) => setDecision({ ...decision, categories: cats })}
             onBack={() => setStep('request')}
             onContinue={() => setStep('duration')}
             language={language}
@@ -394,7 +394,7 @@ export function ConsentManagement({
           <DurationStep
             content={t.steps.duration}
             selectedDuration={decision.duration || '1month'}
-            onSelect={(dur) => setDecision({ ...decision, duration: dur })}
+            onSelect={(dur: string) => setDecision({ ...decision, duration: dur as "session" | "1week" | "1month" | "3months" | "permanent" })}
             onBack={() => setStep('categories')}
             onContinue={() => setStep('preview')}
           />

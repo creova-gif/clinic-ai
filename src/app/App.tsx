@@ -91,7 +91,7 @@ function DashboardLoader() {
 }
 
 function AppContent() {
-  const { userRole, language, setLanguage, setUserRole, setUserData } = useAppStore();
+  const { userRole, userData, language, setLanguage, setUserRole, setUserData } = useAppStore();
   const [currentRoute, setCurrentRoute] = useState('dashboard');
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);

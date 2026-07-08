@@ -535,10 +535,10 @@ function generateHash(data: string): string {
 /**
  * Create Audit Log Entry
  */
-export async function createAuditLog(
+export async function logAuditEvent(
   userId: string,
   action: 'create' | 'read' | 'update' | 'delete' | 'sign' | 'verify' | 'dispense' | 'merge' | 'export',
-  entityType: string,
+  entityType: AuditLog['entity_type'],
   entityId: string,
   changes: Array<{ field: string; old_value: any; new_value: any }> = [],
   reason?: string

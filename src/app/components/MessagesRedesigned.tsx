@@ -21,6 +21,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { Send } from 'lucide-react';
 import {
   MessagesIcon,
   EmergencyIcon,
@@ -29,7 +30,6 @@ import {
   PhoneIcon,
   CheckIcon,
   InfoIcon,
-  SendIcon,
 } from './icons/MedicalIcons';
 import { MedicalButton } from './ui/medical-button';
 import { LoadingState, EmptyState } from './ui/SystemStates';
@@ -411,7 +411,7 @@ export function Messages({
                 variant="primary"
                 size="md"
                 onClick={handleReply}
-                icon={<SendIcon size={20} color="#FFFFFF" />}
+                icon={<Send size={20} color="#FFFFFF" />}
                 fullWidth
                 className="mt-3"
                 disabled={!replyText.trim()}

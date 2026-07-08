@@ -33,6 +33,7 @@ export interface ErrorContext {
   feature?: string;
   isOffline?: boolean;
   deviceType?: string;
+  componentStack?: string;
 }
 
 export interface PerformanceMetric {

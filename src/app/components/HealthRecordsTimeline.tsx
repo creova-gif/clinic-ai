@@ -272,8 +272,6 @@ export function HealthRecordsTimeline({
         onBack={onBack}
         title={t.title}
         subtitle={t.subtitle}
-        icon={FileText}
-        iconColor={colors.blue[500]}
       />
 
       {/* Filters - Fixed: Dropdown instead of horizontal scroll */}
@@ -284,8 +282,9 @@ export function HealthRecordsTimeline({
               {t.filter}
             </span>
             <NativeDropdownFilter
+              label={t.filter}
               value={selectedFilter}
-              onChange={(e) => setSelectedFilter(e.target.value as any)}
+              onChange={(val) => setSelectedFilter(val as any)}
               options={[
                 { value: 'all', label: t.filters.all },
                 { value: 'visit', label: t.filters.visit },

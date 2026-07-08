@@ -20,6 +20,7 @@ interface MedicalCardProps {
   variant?: 'default' | 'elevated' | 'bordered' | 'flat';
   padding?: 'none' | 'sm' | 'md' | 'lg';
   className?: string;
+  style?: React.CSSProperties;
   onClick?: () => void;
   interactive?: boolean;
 }
@@ -43,6 +44,7 @@ export function MedicalCard({
   variant = 'default',
   padding = 'md',
   className = '',
+  style,
   onClick,
   interactive = false,
 }: MedicalCardProps) {
@@ -83,6 +85,7 @@ export function MedicalCard({
     transition: 'all 200ms ease',
     cursor: interactive || onClick ? 'pointer' : 'default',
     fontFamily: 'system-ui, -apple-system, sans-serif',
+    ...style,
   };
 
   const interactiveHoverStyle: React.CSSProperties = {

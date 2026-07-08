@@ -207,7 +207,6 @@ export default function SplashModern({ onComplete, duration = 3000 }: SplashMode
           marginTop: '16px',
           fontSize: '13px',
           color: COLORS.gray900,
-          opacity: 0.6,
           opacity: showTagline ? 1 : 0,
           transition: 'opacity 0.6s ease',
         }}>
