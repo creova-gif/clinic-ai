@@ -10,7 +10,7 @@
 
 AfyaCare (Clinic AI) is a full clinic-and-pharmacy management system aimed at small clinics, dispensaries, and rural health centers. The core web app covers AI-assisted patient triage (symptom analysis with risk scoring, bilingual Swahili/English support), patient charting and timelines, a prescribing interface with AI drug-interaction and dosage checks, pharmacy inventory and dispensing, and an owner/admin dashboard. A companion mobile app and a Node backend (with USSD and SMS support) extend access to low-connectivity settings, and a Supabase backend handles data and edge functions.
 
-[ADD SCREENSHOT HERE]
+![AfyaCare loading screen](docs/screenshots/dashboard.png)
 
 ## Status: In active development
 
