@@ -4,6 +4,26 @@
  * Matches USSDTriageFlow.tsx frontend exactly
  */
 
+/**
+ * MongoDB connection string.
+ * Read only from MONGODB_URI, before any other startup work.
+ * Refuse to start when it is missing. Never log the value.
+ */
+function readMongoConnectionString() {
+  const uri = process.env.MONGODB_URI;
+  if (typeof uri !== 'string' || uri.trim() === '') {
+    console.error(
+      'FATAL: MONGODB_URI is not set. Refusing to start. ' +
+        'Set MONGODB_URI in the deployment environment (see .env.example). ' +
+        'The connection string is read only from that variable and is not printed.'
+    );
+    process.exit(1);
+  }
+  return uri.trim();
+}
+
+const mongoConnectionString = readMongoConnectionString();
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -553,9 +573,14 @@ app.get('/health', (req, res) => {
  * START SERVER
  */
 const PORT = process.env.PORT || 3000;
+if (mongoConnectionString.length === 0) {
+  console.error('FATAL: MONGODB_URI is empty. Refusing to start.');
+  process.exit(1);
+}
 app.listen(PORT, () => {
   console.log(`[AfyaAI USSD Server] Running on port ${PORT}`);
   console.log(`[Callback URL] https://yourdomain.com/ussd`);
+  console.log('[MongoDB] Connection string loaded from MONGODB_URI');
 });
 
 module.exports = app;
