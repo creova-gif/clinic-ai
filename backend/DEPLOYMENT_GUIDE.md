@@ -68,6 +68,8 @@ npm install
 ```
 
 ### **Step 3: Create .env File**
+`.env` is gitignored. Copy placeholders from the repo `.env.example` and set the real values only in the process environment. `ussd-server.js` reads `MONGODB_URI` from the environment and exits on startup if it is missing. Do not commit a connection string.
+
 ```bash
 # .env
 PORT=3000
@@ -77,11 +79,13 @@ AT_USERNAME=your_username
 AT_API_KEY=your_api_key
 AT_SHORTCODE=*123#
 
-# Database (MongoDB example)
+# Database. Local MongoDB has no credentials.
+# Atlas placeholder (set the real value in the host environment only):
+# MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/<db>
 MONGODB_URI=mongodb://localhost:27017/afyaai
 
 # OR PostgreSQL
-# DATABASE_URL=postgresql://user:pass@localhost:5432/afyaai
+# DATABASE_URL=postgresql://<user>:<password>@localhost:5432/<db>
 
 # Environment
 NODE_ENV=development
@@ -150,9 +154,11 @@ cd afyaai-backend
 # Install dependencies
 npm install
 
-# Configure environment
+# Configure environment on the instance. Do not commit .env.
 nano .env
-# Add production values
+# Required: MONGODB_URI (see .env.example). Also set AT_USERNAME and AT_API_KEY.
+# Load the file into the process environment before starting PM2:
+#   set -a && source .env && set +a
 
 # Start with PM2
 pm2 start ussd-server.js --name afyaai-ussd
@@ -246,6 +252,9 @@ services:
       - key: AT_API_KEY
         value: ${AT_API_KEY}
         type: SECRET
+      - key: MONGODB_URI
+        value: ${MONGODB_URI}
+        type: SECRET
     http_port: 3000
     health_check:
       http_path: /health
@@ -290,9 +299,10 @@ railway login
 # Initialize
 railway init
 
-# Set environment variables
+# Set environment variables in the Railway service settings. Do not commit the values.
 railway variables set AT_USERNAME=your_username
 railway variables set AT_API_KEY=your_api_key
+# Required: MONGODB_URI. Enter the connection string in Railway, not in git.
 
 # Deploy
 railway up
@@ -331,12 +341,10 @@ https://account.africastalking.com/apps/dashboard
 
 #### **1. MongoDB Atlas (Cloud)**
 ```bash
-# Create free cluster at https://cloud.mongodb.com
-# Get connection string
-# Example: mongodb+srv://user:pass@cluster.mongodb.net/afyaai
-
-# Update .env
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/afyaai
+# Create a free cluster at https://cloud.mongodb.com
+# Store the connection string as MONGODB_URI in the deployment environment.
+# Placeholder only — do not commit a username, password, or cluster host:
+# MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/<db>
 ```
 
 #### **2. Local MongoDB**
