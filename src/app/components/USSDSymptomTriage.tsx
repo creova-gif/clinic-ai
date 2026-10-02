@@ -27,6 +27,11 @@ import {
   Send,
 } from 'lucide-react';
 import { Button } from './ui/button';
+import { ClinicalUseNotice } from './ClinicalUseNotice';
+import {
+  isClinicalTriageEnabled,
+  PRODUCT_HOLD_NOTICE,
+} from '@/app/services/clinicalProductHold';
 
 interface USSDSymptomTriageProps {
   language: 'sw' | 'en';
@@ -40,7 +45,8 @@ interface TriageQuestion {
 }
 
 interface TriageResult {
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskLevel: 'LOW' | 'MEDIUM' | 'URGENT' | 'EMERGENCY' | null;
+  productHold: boolean;
   recommendation: { sw: string; en: string };
   facility: {
     name: { sw: string; en: string };
@@ -90,7 +96,8 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
       riskLevels: {
         LOW: 'Chini',
         MEDIUM: 'Wastani',
-        HIGH: 'Juu',
+        URGENT: 'Haraka',
+        EMERGENCY: 'Dharura',
       },
     },
     en: {
@@ -121,7 +128,8 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
       riskLevels: {
         LOW: 'Low',
         MEDIUM: 'Medium',
-        HIGH: 'High',
+        URGENT: 'Urgent',
+        EMERGENCY: 'Emergency',
       },
     },
   };
@@ -197,28 +205,43 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
   ];
 
   const computeRiskAndRecommendation = (answers: Record<string, string>): TriageResult => {
-    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+    if (!isClinicalTriageEnabled()) {
+      return {
+        riskLevel: null,
+        productHold: true,
+        recommendation: { ...PRODUCT_HOLD_NOTICE },
+        facility: {
+          name: { sw: '', en: '' },
+          hfrId: '',
+          phone: '',
+          distance: '',
+        },
+        referralCode: '',
+        smsMessage: { ...PRODUCT_HOLD_NOTICE },
+      };
+    }
+
+    let riskLevel: 'LOW' | 'URGENT' | 'EMERGENCY' = 'LOW';
     let recommendation = { sw: '', en: '' };
     
     // Decision tree logic
     const isPregnant = answers.pregnancy === 'yes';
     const isChild = answers.age === '<5';
-    const hasSevereSymptom = answers.symptom === 'bleeding' || answers.symptom === 'breathing';
+    const hasEmergencySymptom = answers.symptom === 'bleeding' || answers.symptom === 'breathing';
     const isSevere = answers.severity === 'severe';
     const isLongDuration = answers.duration === '>7d';
 
-    // Risk assessment
-    if (hasSevereSymptom || isSevere || (isPregnant && answers.symptom === 'bleeding')) {
-      riskLevel = 'HIGH';
+    if (hasEmergencySymptom || (isPregnant && answers.symptom === 'bleeding')) {
+      riskLevel = 'EMERGENCY';
       recommendation = {
-        sw: 'Tembelea kituo cha afya mara moja. Ikiwa ni dharura piga 112.',
-        en: 'Visit health facility immediately. If emergency, call 112.',
+        sw: 'Dharura. Nenda kituo cha afya sasa.',
+        en: 'Emergency. Go to a facility now.',
       };
-    } else if (isPregnant || isChild || isLongDuration) {
-      riskLevel = 'MEDIUM';
+    } else if (isSevere || isPregnant || isChild || isLongDuration) {
+      riskLevel = 'URGENT';
       recommendation = {
-        sw: 'Tembelea kituo cha afya ndani ya saa 24. Unaweza kuwasiliana na CHW kwanza.',
-        en: 'Visit health facility within 24 hours. You may contact CHW first.',
+        sw: 'Haraka. Tembelea kituo cha afya ndani ya saa 24.',
+        en: 'Urgent. Visit a health facility within 24 hours.',
       };
     } else {
       riskLevel = 'LOW';
@@ -232,7 +255,7 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
     const referralCode = `AFY-${Date.now().toString().slice(-6)}`;
 
     // Select appropriate facility based on risk
-    const facility = riskLevel === 'HIGH'
+    const facility = riskLevel === 'EMERGENCY'
       ? {
           name: { sw: 'Hospitali ya Rufaa Muhimbili', en: 'Muhimbili National Hospital' },
           hfrId: 'HFR-001234',
@@ -247,7 +270,7 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
         };
 
     // CHW contact for MEDIUM/LOW risk
-    const chwContact = riskLevel !== 'HIGH' ? '+255-754-123-456' : undefined;
+    const chwContact = riskLevel === 'LOW' ? '+255-754-123-456' : undefined;
 
     // Generate SMS message
     const smsMessage = {
@@ -257,6 +280,7 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
 
     return {
       riskLevel,
+      productHold: false,
       recommendation,
       facility,
       chwContact,
@@ -311,6 +335,7 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
   if (mode === 'select') {
     return (
       <div className="min-h-screen bg-[#FAFBFC]">
+        {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
         {/* Header */}
         <div className="bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] text-white">
           <div className="max-w-4xl mx-auto px-6 py-6">
@@ -422,6 +447,7 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
 
     return (
       <div className="min-h-screen bg-black text-[#00FF00] font-mono">
+        {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
         {/* USSD Screen Simulator */}
         <div className="max-w-md mx-auto p-4">
           {/* Status Bar */}
@@ -488,6 +514,7 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
 
     return (
       <div className="min-h-screen bg-[#FAFBFC]">
+        {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
         {/* SMS Interface */}
         <div className="max-w-md mx-auto p-4">
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -555,17 +582,27 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
     );
   }
 
+  if (mode === 'result' && result?.productHold) {
+    return (
+      <div className="min-h-screen bg-[#FAFBFC] pb-8">
+        <ClinicalUseNotice mode="hold" />
+      </div>
+    );
+  }
+
   // Result Screen
-  if (mode === 'result' && result) {
+  if (mode === 'result' && result && result.riskLevel) {
     const riskColors = {
       LOW: { bg: '#ECFDF5', text: '#10B981', border: '#A7F3D0' },
       MEDIUM: { bg: '#FFFBEB', text: '#F59E0B', border: '#FDE68A' },
-      HIGH: { bg: '#FEF2F2', text: '#EF4444', border: '#FECACA' },
+      URGENT: { bg: '#FFF7ED', text: '#C2410C', border: '#FDBA74' },
+      EMERGENCY: { bg: '#FEF2F2', text: '#B91C1C', border: '#FECACA' },
     };
     const colors = riskColors[result.riskLevel];
 
     return (
       <div className="min-h-screen bg-[#FAFBFC] pb-8">
+        <ClinicalUseNotice mode="unvalidated" />
         {/* Header */}
         <div className="bg-white border-b border-[#E5E7EB]">
           <div className="max-w-4xl mx-auto px-6 py-6">
@@ -683,7 +720,7 @@ export function USSDSymptomTriage({ language, onBack }: USSDSymptomTriageProps) 
           </div>
 
           {/* Emergency Notice */}
-          {result.riskLevel === 'HIGH' && (
+          {result.riskLevel === 'EMERGENCY' && (
             <div className="bg-[#FEF2F2] rounded-xl border border-[#FEE2E2] p-4">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-6 h-6 text-[#EF4444] flex-shrink-0" />

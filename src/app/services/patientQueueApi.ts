@@ -15,6 +15,7 @@
  */
 
 import { supabase, USE_MOCK_DATA } from './supabase';
+import type { RiskLevel } from './clinicalProductHold';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -26,7 +27,7 @@ export interface PatientQueueItem {
   patient_name: string;
   age: number;
   sex: 'M' | 'F' | 'O';
-  risk_level: 'low' | 'medium' | 'high';
+  risk_level: RiskLevel;
   complaint: string;
   department: string;
   status: 'Waiting' | 'In Consultation' | 'Completed' | 'Cancelled';
@@ -210,6 +211,8 @@ export const patientQueueApi = {
     waiting: number;
     inConsultation: number;
     highRisk: number;
+    urgent: number;
+    emergency: number;
     avgWaitMinutes: number;
   }> {
     if (USE_MOCK_DATA) {
@@ -217,7 +220,9 @@ export const patientQueueApi = {
         total: 12,
         waiting: 8,
         inConsultation: 3,
-        highRisk: 2,
+        highRisk: 0,
+        urgent: 1,
+        emergency: 1,
         avgWaitMinutes: 28,
       };
     }
@@ -242,6 +247,8 @@ export const patientQueueApi = {
       waiting: waiting.length,
       inConsultation: data?.filter(p => p.status === 'In Consultation').length || 0,
       highRisk: data?.filter(p => p.risk_level === 'high').length || 0,
+      urgent: data?.filter(p => p.risk_level === 'urgent').length || 0,
+      emergency: data?.filter(p => p.risk_level === 'emergency').length || 0,
       avgWaitMinutes: waiting.length > 0
         ? Math.round(
             waiting.reduce((sum, p) => {
@@ -453,7 +460,7 @@ function getMockQueue(): PatientQueueItem[] {
       patient_name: 'Amina Juma',
       age: 28,
       sex: 'F',
-      risk_level: 'high',
+      risk_level: 'emergency',
       complaint: 'Severe headache, blurred vision',
       department: 'OPD',
       status: 'Waiting',
@@ -473,7 +480,7 @@ function getMockQueue(): PatientQueueItem[] {
       patient_name: 'Joseph Mwangi',
       age: 52,
       sex: 'M',
-      risk_level: 'medium',
+      risk_level: 'urgent',
       complaint: 'Chest tightness, shortness of breath',
       department: 'Emergency',
       status: 'In Consultation',

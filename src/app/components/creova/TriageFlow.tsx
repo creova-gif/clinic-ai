@@ -15,6 +15,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ClinicalUseNotice } from '@/app/components/ClinicalUseNotice';
+import { isClinicalTriageEnabled } from '@/app/services/clinicalProductHold';
 
 const COLORS = {
   primary: '#0F3D56',
@@ -203,13 +205,13 @@ export default function TriageFlow() {
 
   // AI Triage Result (mock)
   const [triageResult, setTriageResult] = useState({
-    category: 'Urgent',
+    category: 'Emergency',
     categorySw: 'Dharura',
-    severity: 'high' as 'high' | 'medium' | 'low',
-    reasoning: 'Elevated blood pressure (165/110) with headache and blurred vision in pregnant patient suggests severe pre-eclampsia.',
-    reasoningSw: 'Shinikizo la damu la juu (165/110) na maumivu ya kichwa na kuona vibaya kwa mjamzito inaonyesha pre-eclampsia kali.',
-    action: 'Immediate doctor consultation required. Do not delay.',
-    actionSw: 'Consultation ya daktari inahitajika mara moja. Usicheleweshe.',
+    severity: 'emergency' as 'emergency' | 'urgent' | 'moderate' | 'routine',
+    reasoning: 'Elevated blood pressure (165/110) with headache and blurred vision in a pregnant patient. Unvalidated pattern only — not a diagnosis.',
+    reasoningSw: 'Shinikizo la damu la juu (165/110) na maumivu ya kichwa na kuona vibaya kwa mjamzito. Muundo usiothibitishwa tu — si utambuzi.',
+    action: 'Immediate clinician review.',
+    actionSw: 'Uhakiki wa mhudumu mara moja.',
   });
 
   const handleNext = () => {
@@ -236,6 +238,7 @@ export default function TriageFlow() {
       background: COLORS.neutral50,
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
+      {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
       {/* Header */}
       <div style={{
         height: 64,
@@ -483,11 +486,14 @@ export default function TriageFlow() {
                 {language === 'en' ? 'Triage Summary' : 'Muhtasari wa Triage'}
               </h2>
 
+              {isClinicalTriageEnabled() ? (
+              <>
+              <ClinicalUseNotice mode="unvalidated" />
               {/* Triage Category */}
               <div style={{
                 padding: 24,
-                background: triageResult.severity === 'high' ? COLORS.redLight : triageResult.severity === 'medium' ? COLORS.amberLight : COLORS.greenLight,
-                border: `3px solid ${triageResult.severity === 'high' ? COLORS.red : triageResult.severity === 'medium' ? COLORS.amber : COLORS.green}`,
+                background: triageResult.severity === 'emergency' ? COLORS.redLight : triageResult.severity === 'urgent' ? COLORS.amberLight : COLORS.greenLight,
+                border: `3px solid ${triageResult.severity === 'emergency' ? COLORS.red : triageResult.severity === 'urgent' ? COLORS.amber : COLORS.green}`,
                 borderRadius: 12,
                 marginBottom: 24,
               }}>
@@ -496,16 +502,16 @@ export default function TriageFlow() {
                     width: 64,
                     height: 64,
                     borderRadius: '50%',
-                    background: triageResult.severity === 'high' ? COLORS.red : triageResult.severity === 'medium' ? COLORS.amber : COLORS.green,
+                    background: triageResult.severity === 'emergency' ? COLORS.red : triageResult.severity === 'urgent' ? COLORS.amber : COLORS.green,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 32,
                   }}>
-                    {triageResult.severity === 'high' ? '🚨' : triageResult.severity === 'medium' ? '⚠️' : '✓'}
+                    {triageResult.severity === 'emergency' ? '🚨' : triageResult.severity === 'urgent' ? '⚠️' : '✓'}
                   </div>
                   <div>
-                    <h3 style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 700, color: triageResult.severity === 'high' ? COLORS.red : triageResult.severity === 'medium' ? '#92400E' : COLORS.green }}>
+                    <h3 style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 700, color: triageResult.severity === 'emergency' ? COLORS.red : triageResult.severity === 'urgent' ? '#92400E' : COLORS.green }}>
                       {language === 'en' ? triageResult.category : triageResult.categorySw}
                     </h3>
                     <p style={{ margin: 0, fontSize: 14, color: COLORS.neutral700, fontWeight: 500 }}>
@@ -524,6 +530,8 @@ export default function TriageFlow() {
                   </p>
                 </div>
               </div>
+              </>
+              ) : null}
 
               {/* Summary */}
               <div style={{

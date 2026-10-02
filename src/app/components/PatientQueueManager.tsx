@@ -10,6 +10,8 @@ import { patientQueueApi } from '@/app/services/patientQueueApi';
 import type { PatientQueueItem, ClinicalNote, LabOrder, MedicationDispense } from '@/app/services/patientQueueApi';
 import { toast } from 'sonner';
 import { MicroErrorBoundary } from '@/app/components/ui/micro-error-boundary';
+import { ClinicalUseNotice } from '@/app/components/ClinicalUseNotice';
+import { isClinicalTriageEnabled, type RiskLevel } from '@/app/services/clinicalProductHold';
 
 const COLORS = {
   primary: "#0F3D56",
@@ -34,13 +36,15 @@ const COLORS = {
 };
 
 interface RiskBadgeProps {
-  risk: 'low' | 'medium' | 'high';
+  risk: RiskLevel;
 }
 
 function RiskBadge({ risk }: RiskBadgeProps) {
-  const configs = {
+  const configs: Record<RiskLevel, { label: string; bg: string; text: string; dot: string }> = {
+    emergency: { label: "Emergency", bg: "#7F1D1D", text: "#FFFFFF", dot: "#FECACA" },
+    urgent: { label: "Urgent", bg: COLORS.amberLight, text: "#9A6200", dot: COLORS.amber },
     high: { label: "High risk", bg: COLORS.redLight, text: COLORS.red, dot: COLORS.red },
-    medium: { label: "Moderate", bg: COLORS.amberLight, text: "#9A6200", dot: COLORS.amber },
+    medium: { label: "Moderate", bg: COLORS.blueLight, text: COLORS.blue, dot: COLORS.blue },
     low: { label: "Low risk", bg: COLORS.greenLight, text: COLORS.green, dot: COLORS.green },
   };
   const cfg = configs[risk];
@@ -126,11 +130,15 @@ interface QueuePanelProps {
 }
 
 function QueuePanel({ patients, selectedId, onSelect, filter, onFilterChange }: QueuePanelProps) {
-  const filters = ["All", "High risk", "OPD", "Emergency", "Maternity", "Paediatrics"];
+  const filters = isClinicalTriageEnabled()
+    ? ["All", "Emergency level", "Urgent", "High risk", "OPD", "Emergency", "Maternity", "Paediatrics"]
+    : ["All", "OPD", "Emergency", "Maternity", "Paediatrics"];
   
   const filtered = patients.filter(p => {
     if (filter === "All") return true;
     if (filter === "High risk") return p.risk_level === "high";
+    if (filter === "Urgent") return p.risk_level === "urgent";
+    if (filter === "Emergency level") return p.risk_level === "emergency";
     return p.department === filter;
   });
 
@@ -164,7 +172,7 @@ function QueuePanel({ patients, selectedId, onSelect, filter, onFilterChange }: 
                   {p.age}{p.sex} · {p.patient_id}
                 </span>
               </div>
-              <RiskBadge risk={p.risk_level} />
+              {isClinicalTriageEnabled() && <RiskBadge risk={p.risk_level} />}
             </div>
             <p style={{ margin: 0, fontSize: 12, color: COLORS.neutral600, marginBottom: 4 }}>{p.complaint}</p>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -244,7 +252,15 @@ function PatientDetail({ patient }: PatientDetailProps) {
       <div style={{
         padding: "16px 20px",
         borderBottom: `1px solid ${COLORS.neutral200}`,
-        background: patient.risk_level === "high" ? COLORS.redLight : COLORS.white
+        background: !isClinicalTriageEnabled()
+          ? COLORS.white
+          : patient.risk_level === "emergency"
+          ? "#FEF2F2"
+          : patient.risk_level === "urgent"
+          ? COLORS.amberLight
+          : patient.risk_level === "high"
+          ? COLORS.redLight
+          : COLORS.white
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -261,7 +277,7 @@ function PatientDetail({ patient }: PatientDetailProps) {
                 <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: COLORS.neutral800 }}>
                   {patient.patient_name}
                 </h3>
-                <RiskBadge risk={patient.risk_level} />
+                {isClinicalTriageEnabled() && <RiskBadge risk={patient.risk_level} />}
               </div>
               <p style={{ margin: 0, fontSize: 12, color: COLORS.neutral400, marginTop: 2 }}>
                 {patient.age}y · {patient.sex === "F" ? "Female" : "Male"} · {patient.patient_id} · {patient.department}
@@ -269,7 +285,21 @@ function PatientDetail({ patient }: PatientDetailProps) {
             </div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            {patient.risk_level === "high" && (
+            {isClinicalTriageEnabled() && patient.risk_level === "emergency" && (
+              <button style={{
+                padding: "7px 14px", borderRadius: 8,
+                background: "#7F1D1D", color: "#fff",
+                border: "none", fontSize: 12, fontWeight: 500, cursor: "pointer"
+              }}>Emergency response</button>
+            )}
+            {isClinicalTriageEnabled() && patient.risk_level === "urgent" && (
+              <button style={{
+                padding: "7px 14px", borderRadius: 8,
+                background: COLORS.amber, color: "#fff",
+                border: "none", fontSize: 12, fontWeight: 500, cursor: "pointer"
+              }}>Urgent review</button>
+            )}
+            {isClinicalTriageEnabled() && patient.risk_level === "high" && (
               <button style={{
                 padding: "7px 14px", borderRadius: 8,
                 background: COLORS.red, color: "#fff",
@@ -329,7 +359,41 @@ function PatientDetail({ patient }: PatientDetailProps) {
       <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
         {tab === "overview" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {patient.risk_level === "high" && (
+            {isClinicalTriageEnabled() && patient.risk_level === "emergency" && (
+              <div style={{
+                padding: 12, borderRadius: 8,
+                background: "#FEF2F2",
+                border: "1px solid #7F1D1D",
+                display: "flex", gap: 10, alignItems: "flex-start"
+              }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 500, fontSize: 13, color: "#7F1D1D" }}>
+                    Emergency level
+                  </p>
+                  <p style={{ margin: "3px 0 0", fontSize: 12, color: "#7F1D1D" }}>
+                    Emergency. Follow the local emergency protocol.
+                  </p>
+                </div>
+              </div>
+            )}
+            {isClinicalTriageEnabled() && patient.risk_level === "urgent" && (
+              <div style={{
+                padding: 12, borderRadius: 8,
+                background: COLORS.amberLight,
+                border: `1px solid ${COLORS.amber}`,
+                display: "flex", gap: 10, alignItems: "flex-start"
+              }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 500, fontSize: 13, color: "#9A6200" }}>
+                    Urgent level
+                  </p>
+                  <p style={{ margin: "3px 0 0", fontSize: 12, color: "#9A6200" }}>
+                    Urgent. Review soon.
+                  </p>
+                </div>
+              </div>
+            )}
+            {isClinicalTriageEnabled() && patient.risk_level === "high" && (
               <div style={{
                 padding: 12, borderRadius: 8,
                 background: COLORS.redLight,
@@ -468,7 +532,7 @@ export default function PatientQueueManager() {
   const [patients, setPatients] = useState<PatientQueueItem[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PatientQueueItem | null>(null);
   const [queueFilter, setQueueFilter] = useState("All");
-  const [stats, setStats] = useState({ total: 0, waiting: 0, inConsultation: 0, highRisk: 0, avgWaitMinutes: 0 });
+  const [stats, setStats] = useState({ total: 0, waiting: 0, inConsultation: 0, highRisk: 0, urgent: 0, emergency: 0, avgWaitMinutes: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -507,7 +571,13 @@ export default function PatientQueueManager() {
     { label: "Patients today", value: stats.total, delta: `${stats.waiting} waiting`, color: COLORS.primary },
     { label: "Waiting now", value: stats.waiting, delta: `Avg wait ${stats.avgWaitMinutes} min`, color: COLORS.amber },
     { label: "In consultation", value: stats.inConsultation, delta: "Active now", color: COLORS.teal },
-    { label: "Emergency alerts", value: stats.highRisk, delta: "Immediate attention", color: COLORS.red },
+    ...(isClinicalTriageEnabled()
+      ? [
+          { label: "Emergency", value: stats.emergency, delta: "Immediate response", color: "#7F1D1D" },
+          { label: "Urgent", value: stats.urgent, delta: "Review soon", color: COLORS.amber },
+          { label: "Legacy high", value: stats.highRisk, delta: "Existing high rows", color: COLORS.red },
+        ]
+      : []),
   ];
 
   if (loading) {
@@ -534,6 +604,7 @@ export default function PatientQueueManager() {
       fontFamily: "'Geist', 'Inter', system-ui, sans-serif",
       fontSize: 13, color: COLORS.neutral800
     }}>
+      <ClinicalUseNotice mode={isClinicalTriageEnabled() ? "unvalidated" : "hold"} />
       {/* Top Bar */}
       <header style={{
         height: 52, background: COLORS.primary,

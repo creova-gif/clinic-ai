@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS patient_queue (
   patient_name TEXT NOT NULL,
   age INTEGER,
   sex TEXT CHECK (sex IN ('M', 'F', 'O')) NOT NULL,
-  risk_level TEXT CHECK (risk_level IN ('low', 'medium', 'high')) DEFAULT 'low',
+  risk_level TEXT CHECK (risk_level IN ('low', 'medium', 'high', 'urgent', 'emergency')) DEFAULT 'low',
   complaint TEXT NOT NULL,
   department TEXT NOT NULL, -- OPD, Emergency, Maternity, Paediatrics
   status TEXT CHECK (status IN ('Waiting', 'In Consultation', 'Completed', 'Cancelled')) DEFAULT 'Waiting',

@@ -12,6 +12,16 @@ AfyaCare (Clinic AI) is a full clinic-and-pharmacy management system aimed at sm
 
 ![AfyaCare loading screen](docs/screenshots/dashboard.png)
 
+## Clinical triage product hold
+
+Symptom triage and AI assessment are **not for clinical use**. `VITE_CLINICAL_TRIAGE_ENABLED` defaults to off (`false` in `.env.example`; a missing value is also off). Only the exact string `true` enables it, and only for a supervised pilot or demo.
+
+- **Off:** triage screens show a persistent English and Swahili notice: "Not for clinical use: under product hold" / "Si kwa matumizi ya kliniki: kizuizi cha bidhaa". The app does not produce risk levels or possible-condition suggestions.
+- **On:** every triage result shows: "Unvalidated: decision support only, not a diagnosis; follow local clinical protocols and refer when in doubt".
+- **Levels:** `urgent` and `emergency` stay distinct. New assessments do not collapse either one into `high`. Legacy `high` rows remain valid in the database.
+
+The Node USSD server uses `CLINICAL_TRIAGE_ENABLED` the same way (off unless exactly `true`). The migration that allows `urgent` and `emergency` in `risk_level` checks is in `supabase/migrations/` and is not applied by this repository automatically.
+
 ## Status: In active development
 
 This is one of the most substantially built-out repos in the portfolio — real triage/prescribing/pharmacy workflows, a Supabase backend, a mobile companion app, and USSD/SMS support for offline-first regions. That said, a few things need verification before calling this production-ready:

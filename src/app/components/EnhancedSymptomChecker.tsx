@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { ClinicalTriageEngine } from './ClinicalTriageEngine';
 import type { TriageResult, SymptomAnswer } from './ClinicalTriageEngine';
+import { ClinicalUseNotice } from './ClinicalUseNotice';
+import { isClinicalTriageEnabled } from '@/app/services/clinicalProductHold';
 import { api } from '@/app/services/api';
 import { toast } from 'sonner';
 import { MedicalButton, MedicalCard, colors } from '@/app/design-system';
@@ -217,12 +219,16 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
       const transcript = finalAnswers.map(a => `${a.questionId}: ${a.answer}`).join('\n');
       const result = await ClinicalTriageEngine.assessSymptomsWithAI(transcript, language);
       
-      saveAssessment(result, finalAnswers);
+      if (!result.productHold) {
+        saveAssessment(result, finalAnswers);
+      }
       setTriageResult(result);
       setShowResults(true);
 
-      if (result.level === 'emergency' || result.level === 'urgent') {
+      if (result.level === 'emergency') {
         navigator.vibrate?.([200, 100, 200]);
+      } else if (result.level === 'urgent') {
+        navigator.vibrate?.([80]);
       }
 
       sessionStorage.removeItem('symptom_checker_autosave');
@@ -271,7 +277,28 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
   };
 
   // ── Results screen ──────────────────────────────────────────────────────────
-  if (showResults && triageResult) {
+  if (showResults && triageResult?.productHold) {
+    return (
+      <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
+        <ClinicalUseNotice mode="hold" />
+        <div className="max-w-4xl mx-auto px-4 pt-6">
+          <AnimatedButton
+            type="button"
+            variant="secondary"
+            size="lg"
+            fullWidth
+            aria-label={t.backHome}
+            onClick={onBack}
+          >
+            <ChevronLeft className="w-5 h-5" />
+            {t.backHome}
+          </AnimatedButton>
+        </div>
+      </main>
+    );
+  }
+
+  if (showResults && triageResult && triageResult.level) {
     const levelColors = getLevelColor(triageResult.level);
     const levelLabel = t[triageResult.level as keyof typeof t] || triageResult.level;
 
@@ -281,18 +308,22 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
 
     // StatusBadge variant for risk level
     const riskBadgeVariant =
-      triageResult.level === 'emergency' || triageResult.level === 'urgent'
+      triageResult.level === 'emergency'
         ? 'danger'
+        : triageResult.level === 'urgent'
+        ? 'warning'
         : triageResult.level === 'moderate'
         ? 'warning'
         : 'success';
 
     const riskBadgeLabel =
-      triageResult.level === 'emergency' || triageResult.level === 'urgent'
-        ? 'Haraka!'
+      triageResult.level === 'emergency'
+        ? t.emergency
+        : triageResult.level === 'urgent'
+        ? t.urgent
         : triageResult.level === 'moderate'
-        ? 'Angalia'
-        : 'Kawaida';
+        ? t.moderate
+        : t.mild;
 
     return (
       <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
@@ -309,6 +340,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
         </HeroHeader>
 
         <div className="max-w-4xl mx-auto px-4 pt-6 pb-24 space-y-6">
+          <ClinicalUseNotice mode="unvalidated" />
           {/* Emergency Call Button */}
           {triageResult.callEmergency && (
             <div
@@ -393,8 +425,11 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
                   className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
                   style={{ backgroundColor: levelColors.text }}
                 >
-                  {(triageResult.level === 'emergency' || triageResult.level === 'urgent') && (
+                  {triageResult.level === 'emergency' && (
                     <AlertTriangle className="w-8 h-8 text-white" />
+                  )}
+                  {triageResult.level === 'urgent' && (
+                    <Clock className="w-8 h-8 text-white" />
                   )}
                   {(triageResult.level === 'moderate' || triageResult.level === 'mild') && (
                     <Info className="w-8 h-8 text-white" />
@@ -683,6 +718,7 @@ export function EnhancedSymptomChecker({ onBack }: EnhancedSymptomCheckerProps) 
 
   return (
     <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
+      {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
       <HeroHeader greeting="Angalia Dalili" subtitle="Hatua kwa hatua">
         <button
           type="button"

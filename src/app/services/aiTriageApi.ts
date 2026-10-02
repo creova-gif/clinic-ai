@@ -6,49 +6,29 @@
  * 
  * Features:
  * - Symptom analysis
- * - Risk level scoring (Low, Medium, High)
- * - Care pathway suggestions
- * - Possible condition identification
+ * - Risk levels kept distinct: low, medium, urgent, emergency
+ * - Care pathway suggestions (supervised pilot only)
+ * - Possible condition identification (supervised pilot only)
  * - Multilingual support (Swahili/English)
+ *
+ * Clinical output is behind VITE_CLINICAL_TRIAGE_ENABLED (off by default).
  */
 
 import { supabase, USE_MOCK_DATA } from './supabase';
+import { performLocalTriage } from './localTriageEngine';
+import {
+  deriveTriageAssessment,
+  heldTriageAssessment,
+  isClinicalTriageEnabled,
+  redactClinicalTriage,
+  UNVALIDATED_TRIAGE_BANNER,
+  type TriageAssessment as ClinicalTriageAssessment,
+  type TriageAssessmentInput,
+} from './clinicalProductHold';
 
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
+export type TriageAssessment = ClinicalTriageAssessment;
 
-export interface TriageAssessment {
-  id: string;
-  patient_id: string;
-  patient_name: string;
-  symptoms: string[]; // List of symptoms
-  symptom_text: string; // Original input (voice/text)
-  language: 'sw' | 'en';
-  risk_level: 'low' | 'medium' | 'high';
-  risk_score: number; // 0-100
-  suggested_action: string; // e.g., "Doctor consultation", "Self-care", "Emergency"
-  possible_conditions: string[]; // AI-suggested conditions
-  care_pathway: string; // Recommended next steps
-  vitals?: {
-    temperature?: number;
-    blood_pressure?: string;
-    heart_rate?: number;
-    oxygen_saturation?: number;
-  };
-  created_at: string;
-  created_by: string; // CHW or nurse
-}
-
-export interface TriageInput {
-  patient_id: string;
-  patient_name: string;
-  symptoms: string[];
-  symptom_text: string;
-  language: 'sw' | 'en';
-  vitals?: TriageAssessment['vitals'];
-  created_by: string;
-}
+export type TriageInput = TriageAssessmentInput;
 
 // ============================================================================
 // AI TRIAGE API
@@ -59,25 +39,32 @@ export const aiTriageApi = {
    * Perform AI triage assessment
    */
   async performTriage(input: TriageInput): Promise<TriageAssessment> {
+    if (!isClinicalTriageEnabled()) {
+      return heldTriageAssessment(input);
+    }
+
     if (USE_MOCK_DATA) {
       console.log('🎭 MOCK: AI Triage performed', input);
       return getMockTriageResult(input);
     }
 
     try {
-      // In production, this would call OpenAI API
-      // For now, use rule-based triage
       const assessment = await analyzeSymptoms(input);
+      const { product_hold, unvalidated_banner, ...row } = assessment;
 
-      // Save to database
       const { data, error } = await supabase
         .from('triage_assessments')
-        .insert(assessment as any)
+        .insert(row as any)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      const saved = data as unknown as TriageAssessment;
+      return {
+        ...saved,
+        product_hold,
+        unvalidated_banner,
+      };
     } catch (error) {
       console.error('Triage error:', error);
       throw error;
@@ -88,15 +75,17 @@ export const aiTriageApi = {
    * Get triage history for patient
    */
   async getTriageHistory(patientId: string): Promise<TriageAssessment[]> {
+    const enabled = isClinicalTriageEnabled();
+
     if (USE_MOCK_DATA) {
-      return [getMockTriageResult({
+      return [redactClinicalTriage(getMockTriageResult({
         patient_id: patientId,
         patient_name: 'Mock Patient',
         symptoms: ['fever', 'headache'],
         symptom_text: 'Mgonjwa ana homa na maumivu ya kichwa',
         language: 'sw',
         created_by: 'nurse-1',
-      })];
+      }), enabled)];
     }
 
     const { data, error } = await supabase
@@ -106,7 +95,18 @@ export const aiTriageApi = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    const rows = (data ?? []) as unknown as TriageAssessment[];
+    return rows.map((row) =>
+      redactClinicalTriage(
+        {
+          ...row,
+          possible_conditions: row.possible_conditions ?? [],
+          product_hold: false,
+          unvalidated_banner: enabled ? { ...UNVALIDATED_TRIAGE_BANNER } : null,
+        },
+        enabled,
+      ),
+    );
   },
 
   /**
@@ -163,14 +163,13 @@ export const aiTriageApi = {
 // AI ANALYSIS ENGINE
 // ============================================================================
 
-import { performLocalTriage } from './localTriageEngine';
-
-// ... (keep the rest of the file intact, but replace the analyzeSymptoms function)
-
 async function analyzeSymptoms(input: TriageInput): Promise<TriageAssessment> {
-  // Use the local WebAssembly model for triage
+  if (!isClinicalTriageEnabled()) {
+    return heldTriageAssessment(input);
+  }
+
   const symptomsText = input.symptoms.join(', ') + (input.symptom_text ? `. ${input.symptom_text}` : '');
-  
+
   const vitals = input.vitals ? {
     temp: input.vitals.temperature,
     heartRate: input.vitals.heart_rate,
@@ -178,62 +177,15 @@ async function analyzeSymptoms(input: TriageInput): Promise<TriageAssessment> {
   } : undefined;
 
   const localResult = await performLocalTriage(symptomsText, vitals);
-
-  // Map the localTriageEngine result to TriageAssessment
-  let riskScore = 10;
-  if (localResult.level === 'emergency') riskScore = 90;
-  else if (localResult.level === 'urgent') riskScore = 70;
-  else if (localResult.level === 'moderate') riskScore = 40;
-
-  // Identify possible conditions (basic rule-based as fallback)
-  let possibleConditions: string[] = [];
-  const lowerSymptoms = symptomsText.toLowerCase();
-  if (lowerSymptoms.includes('fever') || lowerSymptoms.includes('homa')) {
-    if (lowerSymptoms.includes('headache') || lowerSymptoms.includes('maumivu ya kichwa')) {
-      possibleConditions.push('Malaria', 'Typhoid', 'Viral infection');
-    } else {
-      possibleConditions.push('Viral infection', 'Bacterial infection');
-    }
+  if (localResult.productHold || localResult.level == null) {
+    return heldTriageAssessment(input);
   }
 
-  if (lowerSymptoms.includes('cough') || lowerSymptoms.includes('kikohozi')) {
-    possibleConditions.push('Upper respiratory infection', 'Pneumonia', 'TB (if persistent)');
-  }
-
-  if (lowerSymptoms.includes('vomiting') || lowerSymptoms.includes('kutapika')) {
-    if (lowerSymptoms.includes('diarrhea') || lowerSymptoms.includes('kuhara')) {
-      possibleConditions.push('Gastroenteritis', 'Food poisoning', 'Cholera');
-    }
-  }
-
-  if (possibleConditions.length === 0) {
-    possibleConditions.push('General consultation needed');
-  }
-
-  // Use the reasoning from the model as well
-  const carePathway = `${localResult.recommendation} ${localResult.reasoning.join('. ')}`;
-
-  // Map levels
-  const mappedLevel = localResult.level === 'emergency' || localResult.level === 'urgent' ? 'high' 
-                    : localResult.level === 'moderate' ? 'medium' 
-                    : 'low';
-
-  return {
-    id: 'triage-' + Date.now(),
-    patient_id: input.patient_id,
-    patient_name: input.patient_name,
-    symptoms: input.symptoms,
-    symptom_text: input.symptom_text,
-    language: input.language,
-    risk_level: mappedLevel,
-    risk_score: riskScore,
-    suggested_action: localResult.recommendation,
-    possible_conditions: possibleConditions,
-    care_pathway: carePathway,
-    vitals: input.vitals,
-    created_at: new Date().toISOString(),
-    created_by: input.created_by,
-  };
+  return deriveTriageAssessment(input, {
+    level: localResult.level,
+    recommendation: localResult.recommendation,
+    reasoning: localResult.reasoning,
+  }, true);
 }
 
 // ============================================================================
@@ -249,7 +201,7 @@ function getMockTriageResult(input: TriageInput): TriageAssessment {
     symptom_text: input.symptom_text,
     language: input.language,
     risk_level: 'medium',
-    risk_score: 65,
+    risk_score: 40,
     suggested_action: 'Doctor consultation recommended',
     possible_conditions: [
       'Malaria',
@@ -265,6 +217,8 @@ function getMockTriageResult(input: TriageInput): TriageAssessment {
     },
     created_at: new Date().toISOString(),
     created_by: input.created_by,
+    product_hold: false,
+    unvalidated_banner: { ...UNVALIDATED_TRIAGE_BANNER },
   };
 }
 

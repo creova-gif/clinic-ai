@@ -47,6 +47,7 @@
     "validate:audit-trail": "node src/app/tests/DataIntegrityValidator.ts audit",
     "test:ci": "node src/app/tests/TestOrchestrator.ts ci",
     "test:unit": "jest --testMatch='**/*.unit.test.ts'",
+    "test:product-hold": "node --experimental-strip-types --test src/app/services/clinicalProductHold.test.ts backend/clinicalProductHold.test.cjs",
     "test:integration": "jest --testMatch='**/*.integration.test.ts'",
     "test:fhir:patient-schema": "jest src/app/tests/FHIRTests.test.ts -t 'Patient Resource'",
     "test:fhir:encounter-schema": "jest src/app/tests/FHIRTests.test.ts -t 'Encounter Resource'",
