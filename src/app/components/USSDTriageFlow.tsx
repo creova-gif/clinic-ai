@@ -12,6 +12,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Phone, MessageSquare, Send } from 'lucide-react';
 import { Button } from './ui/button';
+import { ClinicalUseNotice } from './ClinicalUseNotice';
+import {
+  classifyUssdRisk,
+  isClinicalTriageEnabled,
+  PRODUCT_HOLD_NOTICE,
+} from '@/app/services/clinicalProductHold';
 
 interface USSDTriageFlowProps {
   onBack: () => void;
@@ -26,7 +32,8 @@ interface SessionData {
   symptom?: string;
   dangerSign?: string;
   consciousness?: string;
-  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  riskLevel?: 'LOW' | 'URGENT' | 'EMERGENCY';
+  productHold?: boolean;
   recommendation?: string;
   facility?: string;
   referralCode?: string;
@@ -111,58 +118,48 @@ export function USSDTriageFlow({ onBack }: USSDTriageFlowProps) {
   };
 
   const computeRiskAndResults = () => {
-    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+    if (!isClinicalTriageEnabled()) {
+      setSession(prev => ({
+        ...prev,
+        riskLevel: undefined,
+        productHold: true,
+        recommendation: 'product_hold',
+        facility: '',
+        referralCode: '',
+      }));
+      setScreen(100);
+      return;
+    }
+
     let recommendation = '';
     let facility = '';
-    
-    const { ageGroup, pregnancy, symptom, dangerSign, consciousness } = session;
-    
-    // HIGH RISK CONDITIONS
-    const isChildUnder5 = ageGroup === '1';
-    const isFever = symptom === '1';
-    const isBreathingDifficulty = symptom === '2' && dangerSign === '1';
-    const isHeavyBleeding = symptom === '5' && dangerSign === '2';
-    const isUnconscious = consciousness === '3';
-    const isPregnantBleeding = pregnancy && symptom === '5';
-    const isPregnantSeverePain = pregnancy && symptom === '3';
-    const isFeverLong = feverDuration === '3';
-    
-    if (
-      (isChildUnder5 && isFever && isFeverLong) ||
-      isPregnantBleeding ||
-      isPregnantSeverePain ||
-      isBreathingDifficulty ||
-      isUnconscious ||
-      isHeavyBleeding
-    ) {
-      riskLevel = 'HIGH';
+
+    const riskLevel = classifyUssdRisk({
+      ageGroup: session.ageGroup,
+      pregnancy: session.pregnancy,
+      symptom: session.symptom,
+      dangerSign: session.dangerSign,
+      consciousness: session.consciousness,
+    }) as 'LOW' | 'URGENT' | 'EMERGENCY';
+
+    if (riskLevel === 'EMERGENCY') {
       recommendation = 'emergency';
-      facility = session.language === 'sw' ? 'Muhimbili National Hospital' : 'Muhimbili National Hospital';
-    }
-    // MEDIUM RISK CONDITIONS
-    else if (
-      (isFever && dangerSign === '2') || // Fever 2-3 days
-      symptom === '3' || // Severe pain
-      (symptom === '4' && consciousness === '2') // Diarrhea with weakness
-    ) {
-      riskLevel = 'MEDIUM';
+      facility = 'Muhimbili National Hospital';
+    } else if (riskLevel === 'URGENT') {
       recommendation = 'visit_clinic';
       facility = session.language === 'sw' ? 'Kituo cha Afya Kariakoo' : 'Kariakoo Health Centre';
-    }
-    // LOW RISK
-    else {
-      riskLevel = 'LOW';
+    } else {
       recommendation = 'self_care';
       facility = session.language === 'sw' ? 'Kituo cha Afya Kariakoo' : 'Kariakoo Health Centre';
     }
     
-    // Generate referral code
-    const codePrefix = riskLevel === 'HIGH' ? '8' : riskLevel === 'MEDIUM' ? '2' : '1';
+    const codePrefix = riskLevel === 'EMERGENCY' ? '8' : riskLevel === 'URGENT' ? '2' : '1';
     const referralCode = `AFYA-${codePrefix}${Math.floor(Math.random() * 900 + 100)}`;
     
     setSession(prev => ({
       ...prev,
       riskLevel,
+      productHold: false,
       recommendation,
       facility,
       referralCode,
@@ -172,8 +169,6 @@ export function USSDTriageFlow({ onBack }: USSDTriageFlowProps) {
   };
 
   // Helper to get fever duration (stored in dangerSign for fever symptom)
-  const feverDuration = session.symptom === '1' ? session.dangerSign : null;
-
   // Content definitions
   const screens = {
     0: {
@@ -416,7 +411,7 @@ export function USSDTriageFlow({ onBack }: USSDTriageFlowProps) {
         ],
       },
     },
-    MEDIUM: {
+    URGENT: {
       sw: {
         title: '🟡 DALILI ZINAHITAJI KUANGALIWA',
         message: [
@@ -432,7 +427,7 @@ export function USSDTriageFlow({ onBack }: USSDTriageFlowProps) {
         ],
       },
       en: {
-        title: '🟡 MEDIUM RISK',
+        title: '🟠 URGENT',
         message: [
           'Your symptoms need to be checked by a health worker.',
           '',
@@ -446,7 +441,7 @@ export function USSDTriageFlow({ onBack }: USSDTriageFlowProps) {
         ],
       },
     },
-    HIGH: {
+    EMERGENCY: {
       sw: {
         title: '🔴 HII NI DHARURA',
         message: [
@@ -476,7 +471,12 @@ export function USSDTriageFlow({ onBack }: USSDTriageFlowProps) {
 
   // Get current screen content
   const getCurrentScreen = () => {
-    if (screen === 100 && session.riskLevel) {
+    if (screen === 100 && session.productHold) {
+      return {
+        title: PRODUCT_HOLD_NOTICE.en,
+        message: [PRODUCT_HOLD_NOTICE.sw],
+      };
+    } else if (screen === 100 && session.riskLevel) {
       // Results screen
       const result = results[session.riskLevel][session.language];
       return {
@@ -504,6 +504,10 @@ export function USSDTriageFlow({ onBack }: USSDTriageFlowProps) {
 
   return (
     <div className="min-h-screen bg-black text-[#00FF00] font-mono">
+      {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
+      {isClinicalTriageEnabled() && screen === 100 && session.riskLevel && (
+        <ClinicalUseNotice mode="unvalidated" />
+      )}
       {/* USSD Screen */}
       <div className="max-w-md mx-auto">
         {/* Status Bar */}

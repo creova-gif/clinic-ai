@@ -13,6 +13,8 @@
  */
 
 import { useState } from 'react';
+import { ClinicalUseNotice } from '@/app/components/ClinicalUseNotice';
+import { isClinicalTriageEnabled, PRODUCT_HOLD_NOTICE } from '@/app/services/clinicalProductHold';
 import {
   User,
   Heart,
@@ -311,12 +313,27 @@ export default function TriageModern() {
     // Check symptoms
     if (selectedSymptoms.length >= 4) riskScore += 2;
     
-    if (riskScore >= 5) return { level: 'high', color: COLORS.error, label: language === 'en' ? 'High Priority' : 'Kipaumbele Kikubwa' };
-    if (riskScore >= 2) return { level: 'medium', color: COLORS.warning, label: language === 'en' ? 'Medium Priority' : 'Kipaumbele cha Kati' };
-    return { level: 'low', color: COLORS.success, label: language === 'en' ? 'Standard Priority' : 'Kipaumbele cha Kawaida' };
+    const hasCriticalVital = (
+      getVitalStatus('temp', vitals.temp) === 'critical' ||
+      getVitalStatus('bp_systolic', vitals.bp_systolic) === 'critical' ||
+      getVitalStatus('heartRate', vitals.heartRate) === 'critical' ||
+      getVitalStatus('oxygen', vitals.oxygen) === 'critical'
+    );
+
+    if (hasCriticalVital) {
+      return { level: 'emergency' as const, color: COLORS.error, label: language === 'en' ? 'Emergency' : 'Dharura' };
+    }
+    if (riskScore >= 2) {
+      return { level: 'urgent' as const, color: COLORS.warning, label: language === 'en' ? 'Urgent' : 'Haraka' };
+    }
+    return { level: 'low' as const, color: COLORS.success, label: language === 'en' ? 'Standard Priority' : 'Kipaumbele cha Kawaida' };
   };
 
   const handleComplete = () => {
+    if (!isClinicalTriageEnabled()) {
+      alert(`${PRODUCT_HOLD_NOTICE.en}\n${PRODUCT_HOLD_NOTICE.sw}`);
+      return;
+    }
     const risk = calculateRiskLevel();
     alert(`Triage completed!\nRisk Level: ${risk.label}\nPatient added to queue.`);
     // Reset form or navigate
@@ -328,7 +345,8 @@ export default function TriageModern() {
       background: COLORS.cream,
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       paddingBottom: '100px',
-    }}>
+      }}>
+      {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
       {/* Header */}
       <div style={{
         background: `linear-gradient(135deg, ${COLORS.skyLight} 0%, ${COLORS.purpleLight} 100%)`,
@@ -645,9 +663,11 @@ export default function TriageModern() {
             />
             
             {/* AI Risk Assessment */}
-            {(() => {
+            {isClinicalTriageEnabled() && (() => {
               const risk = calculateRiskLevel();
               return (
+                <>
+                <ClinicalUseNotice mode="unvalidated" />
                 <div style={{
                   background: `${risk.color}15`,
                   borderRadius: '16px',
@@ -683,13 +703,13 @@ export default function TriageModern() {
                   </div>
                   
                   <div style={{ fontSize: '13px', color: COLORS.gray600, lineHeight: '1.5' }}>
-                    {risk.level === 'high' && (language === 'en' 
-                      ? 'Patient requires immediate medical attention. Critical vitals detected.'
-                      : 'Mgonjwa anahitaji huduma ya haraka. Dalili hatari zimegunduliwa.'
+                    {risk.level === 'emergency' && (language === 'en' 
+                      ? 'Emergency. Critical vitals detected.'
+                      : 'Dharura. Dalili hatari zimegunduliwa.'
                     )}
-                    {risk.level === 'medium' && (language === 'en'
-                      ? 'Patient should be seen soon. Some vital signs need monitoring.'
-                      : 'Mgonjwa anapaswa kuonwa hivi karibuni. Dalili zingine zinahitaji ufuatiliaji.'
+                    {risk.level === 'urgent' && (language === 'en'
+                      ? 'Urgent. See a clinician soon.'
+                      : 'Haraka. Mwone mhudumu hivi karibuni.'
                     )}
                     {risk.level === 'low' && (language === 'en'
                       ? 'Patient can wait in standard queue. All vitals appear normal.'
@@ -697,6 +717,7 @@ export default function TriageModern() {
                     )}
                   </div>
                 </div>
+                </>
               );
             })()}
           </div>

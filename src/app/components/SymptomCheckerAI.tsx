@@ -5,6 +5,8 @@ import { Button } from './ui/button';
 
 import { ClinicalTriageEngine, TriageResult } from './ClinicalTriageEngine';
 import { AutonomousDispatchEngine, DispatchTask } from '../services/AutonomousDispatchEngine';
+import { ClinicalUseNotice } from './ClinicalUseNotice';
+import { isClinicalTriageEnabled } from '@/app/services/clinicalProductHold';
 
 interface SymptomCheckerAIProps {
   language: 'sw' | 'en';
@@ -139,7 +141,7 @@ export function SymptomCheckerAI({
       const result = await ClinicalTriageEngine.assessSymptomsWithAI(transcript, language);
       setAssessment(result);
       
-      if (result.level === 'urgent' || result.level === 'emergency') {
+      if (!result.productHold && (result.level === 'urgent' || result.level === 'emergency')) {
          const dispatched = await AutonomousDispatchEngine.dispatchCHW(
            { name: 'Current Patient', phone: '0700000000', location: { lat: -6.8, lng: 39.25 }, language },
            result
@@ -157,10 +159,10 @@ export function SymptomCheckerAI({
     }
   };
 
-  const getRiskColor = (level: string) => {
+  const getRiskColor = (level: string | null) => {
     switch(level) {
-      case 'emergency': return '#DC2626';
-      case 'urgent': return '#EF4444';
+      case 'emergency': return '#7F1D1D';
+      case 'urgent': return '#D97706';
       case 'moderate': return '#F59E0B';
       default: return '#10B981';
     }
@@ -178,6 +180,8 @@ export function SymptomCheckerAI({
           <p className="text-sm text-gray-500">{t.subtitle}</p>
         </div>
       </div>
+
+      {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
 
       {step === 'intro' && (
         <motion.div 
@@ -277,8 +281,15 @@ export function SymptomCheckerAI({
         </div>
       )}
 
-      {step === 'results' && assessment && (
+      {step === 'results' && assessment?.productHold && (
         <div className="flex-1 overflow-y-auto p-6">
+          <ClinicalUseNotice mode="hold" />
+        </div>
+      )}
+
+      {step === 'results' && assessment && !assessment.productHold && (
+        <div className="flex-1 overflow-y-auto p-6">
+          <ClinicalUseNotice mode="unvalidated" />
           <h2 className="text-xl font-bold mb-6 text-center">{t.resultsTitle}</h2>
           
           <motion.div 

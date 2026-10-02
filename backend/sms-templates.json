@@ -3,6 +3,14 @@
   "max_length": 160,
   "sender_id": "AfyaAI",
   "templates": {
+    "EMERGENCY": {
+      "sw": "AfyaAI: DHARURA! Nenda {facility} SASA. Au piga 112. Rejea: {code}. Onyesha nambari hii kwa daktari.",
+      "en": "AfyaAI: EMERGENCY! Go to {facility} NOW. Or call 112. Ref: {code}. Show this to doctor."
+    },
+    "URGENT": {
+      "sw": "AfyaAI: HARAKA. Tafadhali tembelea {facility}. Rejea: {code}. Leo au kesho.",
+      "en": "AfyaAI: URGENT. Please visit {facility}. Ref: {code}. Today or tomorrow."
+    },
     "HIGH": {
       "sw": "AfyaAI: DHARURA! Nenda {facility} SASA. Au piga 112. Rejea: {code}. Onyesha nambari hii kwa daktari.",
       "en": "AfyaAI: EMERGENCY! Go to {facility} NOW. Or call 112. Ref: {code}. Show this to doctor."

@@ -302,7 +302,7 @@ export type MaternalCare = {
   pregnancy_start_date: string;
   estimated_due_date: string;
   current_week: number;
-  risk_level: 'low' | 'medium' | 'high';
+  risk_level: 'low' | 'medium' | 'high' | 'urgent' | 'emergency';
   vital_signs: any[]; // JSON array
   checkups: any[]; // JSON array
   notes?: string;

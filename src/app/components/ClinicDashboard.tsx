@@ -21,6 +21,8 @@ import { pharmacyApi, type StockAlert } from '@/app/services/pharmacyApi';
 import { prescriptionApi, type Prescription } from '@/app/services/prescriptionApi';
 import { patientQueueApi } from '@/app/services/patientQueueApi';
 import { toast } from 'sonner';
+import { ClinicalUseNotice } from '@/app/components/ClinicalUseNotice';
+import { isClinicalTriageEnabled } from '@/app/services/clinicalProductHold';
 
 const COLORS = {
   primary: "#0F3D56",
@@ -512,8 +514,15 @@ export default function ClinicDashboard() {
               {activeTab === 'pharmacy' && 'Pharmacy Stock Management'}
               {activeTab === 'analytics' && 'Analytics & Reports'}
             </h2>
+            {activeTab === 'triage' && (
+              <div style={{ width: '100%', maxWidth: 560, marginBottom: 16, textAlign: 'left' }}>
+                <ClinicalUseNotice mode={isClinicalTriageEnabled() ? 'unvalidated' : 'hold'} />
+              </div>
+            )}
             <p style={{ margin: 0, fontSize: 14, color: COLORS.neutral400, maxWidth: 400 }}>
-              {activeTab === 'triage' && 'AI-powered symptom assessment and risk scoring. Supports Swahili and English voice input.'}
+              {activeTab === 'triage' && (isClinicalTriageEnabled()
+                ? 'Supervised pilot only. Supports Swahili and English. Results are decision support, not a diagnosis.'
+                : 'Symptom triage is under product hold. Risk levels and condition suggestions are not available.')}
               {activeTab === 'prescriptions' && 'Digital prescriptions with drug interaction checking. Seamless clinic-pharmacy integration.'}
               {activeTab === 'pharmacy' && 'Complete inventory management with expiry tracking, alerts, and purchase orders.'}
               {activeTab === 'analytics' && 'Revenue tracking, patient insights, and operational metrics for clinic owners.'}

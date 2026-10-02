@@ -20,6 +20,8 @@ import { OfflineBanner } from '@/app/components/ui/OfflineBanner';
 import { AnimatedButton } from '@/app/components/ui/AnimatedButton';
 import { StatusBadge } from '@/app/components/ui/StatusBadge';
 import { AutonomousDispatchEngine, DispatchTask } from '../services/AutonomousDispatchEngine';
+import { ClinicalUseNotice } from '@/app/components/ClinicalUseNotice';
+import { isClinicalTriageEnabled } from '@/app/services/clinicalProductHold';
 
 const translations = {
   sw: {
@@ -27,6 +29,8 @@ const translations = {
     households: 'Kaya',
     visits: 'Ziara Leo',
     highRisk: 'Hatari Kubwa',
+    emergency: 'Dharura',
+    urgent: 'Haraka',
     referrals: 'Marejesho',
     aiPriority: 'Kipaumbele cha AI',
     visitToday: 'Tembelea Leo',
@@ -55,6 +59,8 @@ const translations = {
     households: 'Households',
     visits: 'Visits Today',
     highRisk: 'High Risk',
+    emergency: 'Emergency',
+    urgent: 'Urgent',
     referrals: 'Referrals',
     aiPriority: 'AI Priority',
     visitToday: 'Visit Today',
@@ -104,7 +110,8 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
     totalHouseholds: 145,
     visitedToday: 8,
     targetToday: 12,
-    highRisk: liveTasks.filter(t => t.triage_level === 'urgent' || t.triage_level === 'emergency').length,
+    emergency: liveTasks.filter(task => task.triage_level === 'emergency').length,
+    urgent: liveTasks.filter(task => task.triage_level === 'urgent').length,
     referrals: 3,
   };
 
@@ -121,6 +128,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
     <main role="main" className="min-h-screen bg-[#f8fafc] pb-20">
       <OfflineBanner />
       
+      {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
       <HeroHeader 
         name={t.title}
         subtitle={`${t.visits}: ${stats.visitedToday} / ${stats.targetToday}`}
@@ -142,7 +150,12 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
           {[
             { icon: <Home className="h-5 w-5 text-[#0d9488]" />, value: '156', label: t.households },
             { icon: <Calendar className="h-5 w-5 text-[#10b981]" />, value: '8', label: t.visits, valueClass: 'text-[#10b981]' },
-            { icon: <AlertTriangle className="h-5 w-5 text-[#ef4444]" />, value: stats.highRisk.toString(), label: t.highRisk, valueClass: 'text-[#ef4444]' },
+            ...(isClinicalTriageEnabled()
+              ? [
+                  { icon: <AlertTriangle className="h-5 w-5 text-[#7F1D1D]" />, value: stats.emergency.toString(), label: t.emergency, valueClass: 'text-[#7F1D1D]' },
+                  { icon: <AlertTriangle className="h-5 w-5 text-[#f97316]" />, value: stats.urgent.toString(), label: t.urgent, valueClass: 'text-[#f97316]' },
+                ]
+              : []),
             { icon: <TrendingUp className="h-5 w-5 text-[#f97316]" />, value: '5', label: t.referrals, valueClass: 'text-[#f97316]' },
           ].map((stat, i) => (
             <motion.div
@@ -217,7 +230,9 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
               <div className="p-6 text-center text-gray-500">No pending dispatch tasks.</div>
             ) : (
               liveTasks.map((task, idx) => {
-                const isCritical = task.triage_level === 'emergency' || task.triage_level === 'urgent';
+                const isEmergency = task.triage_level === 'emergency';
+                const isUrgent = task.triage_level === 'urgent';
+                const showLevel = isClinicalTriageEnabled();
                 return (
                 <motion.div
                   key={task.id}
@@ -225,16 +240,18 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                   animate={{ 
                     opacity: 1, 
                     y: 0,
-                    boxShadow: isCritical ? [
-                      "inset 4px 0 0 #ef4444, 0px 0px 0px rgba(239, 68, 68, 0)",
-                      "inset 4px 0 0 #ef4444, 0px 0px 20px rgba(239, 68, 68, 0.2)",
-                      "inset 4px 0 0 #ef4444, 0px 0px 0px rgba(239, 68, 68, 0)"
-                    ] : "inset 4px 0 0 #f97316, 0 2px 10px rgba(0,0,0,0.02)"
+                    boxShadow: showLevel && isEmergency ? [
+                      "inset 4px 0 0 #7F1D1D, 0px 0px 0px rgba(127, 29, 29, 0)",
+                      "inset 4px 0 0 #7F1D1D, 0px 0px 20px rgba(127, 29, 29, 0.2)",
+                      "inset 4px 0 0 #7F1D1D, 0px 0px 0px rgba(127, 29, 29, 0)"
+                    ] : showLevel && isUrgent
+                    ? "inset 4px 0 0 #f97316, 0 2px 10px rgba(0,0,0,0.02)"
+                    : "inset 4px 0 0 #94a3b8, 0 2px 10px rgba(0,0,0,0.02)"
                   }}
                   transition={{ 
                     opacity: { delay: idx * 0.07 },
                     y: { delay: idx * 0.07 },
-                    boxShadow: isCritical ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}
+                    boxShadow: showLevel && isEmergency ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}
                   }}
                   className="p-5 hover:bg-gray-50 bg-white relative z-10"
                 >
@@ -242,10 +259,12 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
                         <h3 className="text-lg font-bold text-[#0f172a]">{task.patient_name}</h3>
-                        <StatusBadge
-                          variant={task.triage_level === 'emergency' || task.triage_level === 'urgent' ? 'danger' : 'warning'}
-                          label={task.triage_level.toUpperCase()}
-                        />
+                        {showLevel && (
+                          <StatusBadge
+                            variant={isEmergency ? 'danger' : isUrgent ? 'warning' : 'success'}
+                            label={task.triage_level.toUpperCase()}
+                          />
+                        )}
                       </div>
                       <p className="text-sm text-gray-500">
                         {task.patient_phone}
@@ -253,6 +272,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                     </div>
                   </div>
 
+                  {showLevel && (
                   <div className="bg-[#ccfbf1] border-l-[4px] border-l-[#0d9488] p-3 rounded mb-3">
                     <div className="flex items-start gap-2">
                       <Zap className="w-4 h-4 text-[#0d9488] mt-0.5 flex-shrink-0" />
@@ -262,6 +282,7 @@ export function CHWDashboard({ onBack, onNavigate }: CHWDashboardProps) {
                       </div>
                     </div>
                   </div>
+                  )}
 
                   <div className="flex gap-2 min-h-[48px]">
                     <AnimatedButton

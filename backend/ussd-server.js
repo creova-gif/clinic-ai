@@ -4,6 +4,9 @@
  * Matches USSDTriageFlow.tsx frontend exactly
  */
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -17,6 +20,12 @@ const clinicalRules = require('./clinical-decision-tree.json');
 
 // Load SMS templates
 const smsTemplates = require('./sms-templates.json');
+const {
+  isClinicalTriageEnabled,
+  classifyUssdRisk,
+  holdMessage,
+  UNVALIDATED_TRIAGE_BANNER,
+} = require('./clinicalProductHold.cjs');
 
 // Database/storage (use your preferred DB)
 const sessions = new Map(); // In production: Redis/MongoDB
@@ -263,26 +272,28 @@ AfyaAI does not replace a doctor.`;
     // Final: Compute Risk and Send Results
     else if (steps.length === 7) {
       session.consciousness = currentInput;
-      
-      // Compute risk level
-      const assessment = computeRiskLevel(session, clinicalRules);
-      session.riskLevel = assessment.riskLevel;
-      session.recommendation = assessment.recommendation;
-      session.facility = assessment.facility;
-      session.referralCode = generateReferralCode(assessment.riskLevel);
-      session.facilityHfrId = assessment.facilityHfrId;
-      
-      // Build response
-      const result = buildResultMessage(session, assessment, session.language);
-      response = `END ${result}`;
-      
-      shouldEnd = true;
-      
-      // Log session
-      await logSession(session, 'completed');
-      
-      // Send SMS
-      await sendSMS(session, assessment);
+
+      if (!isClinicalTriageEnabled()) {
+        session.riskLevel = undefined;
+        session.recommendation = 'product_hold';
+        response = `END ${holdMessage()}`;
+        shouldEnd = true;
+        await logSession(session, 'product_hold');
+      } else {
+        const assessment = computeRiskLevel(session, clinicalRules);
+        session.riskLevel = assessment.riskLevel;
+        session.recommendation = assessment.recommendation;
+        session.facility = assessment.facility;
+        session.referralCode = generateReferralCode(assessment.riskLevel);
+        session.facilityHfrId = assessment.facilityHfrId;
+
+        const result = buildResultMessage(session, assessment, session.language);
+        response = `END ${UNVALIDATED_TRIAGE_BANNER.en}\n${result}`;
+
+        shouldEnd = true;
+        await logSession(session, 'completed');
+        await sendSMS(session, assessment);
+      }
     }
     
     // Save session
@@ -313,57 +324,36 @@ AfyaAI does not replace a doctor.`;
  * Based on clinical decision tree
  */
 function computeRiskLevel(session, rules) {
-  const { ageGroup, pregnancy, symptom, dangerSign, consciousness } = session;
-  
-  // HIGH RISK CONDITIONS
-  const isChildUnder5 = ageGroup === '1';
-  const isFever = symptom === '1';
-  const feverLong = dangerSign === '3'; // >3 days
-  const breathingSevere = symptom === '2' && dangerSign === '1';
-  const bleedingHeavy = symptom === '5' && dangerSign === '2';
-  const unconscious = consciousness === '3';
-  const severePain = symptom === '3' && dangerSign === '1';
-  
-  if (
-    (isChildUnder5 && isFever && feverLong) ||
-    (pregnancy && symptom === '5') || // Bleeding
-    (pregnancy && severePain) ||
-    breathingSevere ||
-    unconscious ||
-    bleedingHeavy
-  ) {
+  const riskLevel = classifyUssdRisk(session);
+  const emergencyFacility = session.language === 'sw'
+    ? 'Hospitali ya Rufaa Muhimbili'
+    : 'Muhimbili National Hospital';
+  const clinic = session.language === 'sw'
+    ? 'Kituo cha Afya Kariakoo'
+    : 'Kariakoo Health Centre';
+
+  if (riskLevel === 'EMERGENCY') {
     return {
-      riskLevel: 'HIGH',
+      riskLevel,
       recommendation: 'EMERGENCY',
-      facility: session.language === 'sw' 
-        ? 'Hospitali ya Rufaa Muhimbili' 
-        : 'Muhimbili National Hospital',
+      facility: emergencyFacility,
       facilityHfrId: 'HFR-001234',
     };
   }
-  
-  // MEDIUM RISK CONDITIONS
-  const feverModerate = isFever && dangerSign === '2'; // 2-3 days
-  const diarrheaWeak = symptom === '4' && consciousness === '2';
-  
-  if (feverModerate || severePain || diarrheaWeak) {
+
+  if (riskLevel === 'URGENT') {
     return {
-      riskLevel: 'MEDIUM',
+      riskLevel,
       recommendation: 'VISIT_CLINIC',
-      facility: session.language === 'sw' 
-        ? 'Kituo cha Afya Kariakoo' 
-        : 'Kariakoo Health Centre',
+      facility: clinic,
       facilityHfrId: 'HFR-005678',
     };
   }
-  
-  // LOW RISK (Default)
+
   return {
     riskLevel: 'LOW',
     recommendation: 'SELF_CARE',
-    facility: session.language === 'sw' 
-      ? 'Kituo cha Afya Kariakoo' 
-      : 'Kariakoo Health Centre',
+    facility: clinic,
     facilityHfrId: 'HFR-005678',
   };
 }
@@ -372,7 +362,7 @@ function computeRiskLevel(session, rules) {
  * GENERATE REFERRAL CODE
  */
 function generateReferralCode(riskLevel) {
-  const prefix = riskLevel === 'HIGH' ? '8' : riskLevel === 'MEDIUM' ? '2' : '1';
+  const prefix = riskLevel === 'EMERGENCY' ? '8' : riskLevel === 'URGENT' ? '2' : '1';
   const random = Math.floor(100 + Math.random() * 900);
   return `AFYA-${prefix}${random}`;
 }
@@ -385,7 +375,7 @@ function buildResultMessage(session, assessment, language) {
   const { referralCode } = session;
   
   if (language === 'sw') {
-    if (riskLevel === 'HIGH') {
+    if (riskLevel === 'EMERGENCY') {
       return `🔴 HII NI DHARURA
 
 Tafadhali nenda HARAKA kwenye:
@@ -395,7 +385,7 @@ Au piga 112 sasa.
 
 Rejea: ${referralCode}
 Tunakutumia SMS ya maelekezo.`;
-    } else if (riskLevel === 'MEDIUM') {
+    } else if (riskLevel === 'URGENT') {
       return `🟡 DALILI ZINAHITAJI KUANGALIWA
 
 Dalili zako zinahitaji kuangaliwa na mhudumu wa afya.
@@ -423,7 +413,7 @@ Kituo cha karibu: ${facility}
 Rejea: ${referralCode}`;
     }
   } else {
-    if (riskLevel === 'HIGH') {
+    if (riskLevel === 'EMERGENCY') {
       return `🔴 THIS IS AN EMERGENCY
 
 Please go IMMEDIATELY to:
@@ -433,7 +423,7 @@ Or call 112 now.
 
 Ref: ${referralCode}
 We are sending you an SMS with instructions.`;
-    } else if (riskLevel === 'MEDIUM') {
+    } else if (riskLevel === 'URGENT') {
       return `🟡 SYMPTOMS NEED ATTENTION
 
 Your symptoms need to be checked by a health worker.
@@ -471,7 +461,10 @@ async function sendSMS(session, assessment) {
   const { phoneNumber, language, referralCode, facility, riskLevel } = session;
   
   try {
-    const message = smsTemplates[riskLevel][language]
+    const templates = smsTemplates.templates || smsTemplates;
+    const template = templates[riskLevel] && templates[riskLevel][language];
+    if (!template) return;
+    const message = template
       .replace('{facility}', facility)
       .replace('{code}', referralCode);
     
@@ -558,4 +551,4 @@ app.listen(PORT, () => {
   console.log(`[Callback URL] https://yourdomain.com/ussd`);
 });
 
-module.exports = app;
+export default app;

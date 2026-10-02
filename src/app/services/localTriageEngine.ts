@@ -1,4 +1,8 @@
 import { pipeline, env } from '@xenova/transformers';
+import {
+  isClinicalTriageEnabled,
+  PRODUCT_HOLD_NOTICE,
+} from './clinicalProductHold';
 
 // Configure transformers.js to use local paths if needed, or disable remote models if strictly offline.
 // In a real offline app, you'd download the model weights and set env.localModelPath.
@@ -20,13 +24,14 @@ export async function initLocalTriageModel() {
 }
 
 export interface TriageResult {
-  level: 'emergency' | 'urgent' | 'moderate' | 'mild';
+  level: 'emergency' | 'urgent' | 'moderate' | 'mild' | null;
   confidence: 'high' | 'medium' | 'low';
   recommendation: string;
   reasoning: string[];
   redFlags: string[];
   escalationRequired: boolean;
   callEmergency: boolean;
+  productHold: boolean;
 }
 
 /**
@@ -36,6 +41,19 @@ export async function performLocalTriage(
   symptoms: string,
   vitals?: { temp?: number; heartRate?: number; bloodPressure?: string }
 ): Promise<TriageResult> {
+  if (!isClinicalTriageEnabled()) {
+    return {
+      level: null,
+      confidence: 'low',
+      recommendation: PRODUCT_HOLD_NOTICE.en,
+      reasoning: [PRODUCT_HOLD_NOTICE.sw],
+      redFlags: [],
+      escalationRequired: false,
+      callEmergency: false,
+      productHold: true,
+    };
+  }
+
   const model = await initLocalTriageModel();
 
   const labels = ['emergency', 'urgent', 'moderate', 'mild'];
@@ -71,6 +89,7 @@ export async function performLocalTriage(
     ],
     redFlags,
     escalationRequired: topLabel === 'emergency' || topLabel === 'urgent',
-    callEmergency: topLabel === 'emergency'
+    callEmergency: topLabel === 'emergency',
+    productHold: false,
   };
 }

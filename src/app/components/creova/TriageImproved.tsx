@@ -11,6 +11,8 @@
  */
 
 import { useState } from 'react';
+import { ClinicalUseNotice } from '@/app/components/ClinicalUseNotice';
+import { isClinicalTriageEnabled } from '@/app/services/clinicalProductHold';
 import { ChevronRight, Camera, Thermometer, Heart, Activity } from 'lucide-react';
 
 const COLORS = {
@@ -99,7 +101,12 @@ export default function TriageImproved() {
   };
 
   const calculateTriage = () => {
-    // Simple AI triage logic
+    if (!isClinicalTriageEnabled()) {
+      setTriageResult(null);
+      setStep(3);
+      return;
+    }
+
     const bpSystolic = parseInt(vitals.bp.split('/')[0] || '0');
     const temp = parseFloat(vitals.temp || '0');
     const hr = parseInt(vitals.hr || '0');
@@ -178,6 +185,8 @@ export default function TriageImproved() {
           {language === 'en' ? '🇬🇧 English' : '🇹🇿 Kiswahili'}
         </button>
       </div>
+
+      {!isClinicalTriageEnabled() && <ClinicalUseNotice mode="hold" />}
 
       {/* Progress Indicator (3 steps) */}
       <div style={{
@@ -513,8 +522,12 @@ export default function TriageImproved() {
         )}
 
         {/* STEP 3: Result */}
+        {step === 3 && !triageResult && (
+          <ClinicalUseNotice mode="hold" />
+        )}
         {step === 3 && triageResult && (
           <div style={{ textAlign: 'center' }}>
+            <ClinicalUseNotice mode="unvalidated" />
             <div style={{
               width: 120,
               height: 120,

@@ -10,6 +10,11 @@
 
 import { performLocalTriage } from '../services/localTriageEngine';
 import { supabase } from '../services/supabase';
+import {
+  isClinicalTriageEnabled,
+  PRODUCT_HOLD_NOTICE,
+  UNVALIDATED_TRIAGE_BANNER,
+} from '../services/clinicalProductHold';
 
 export interface SymptomAnswer {
   questionId: string;
@@ -19,7 +24,7 @@ export interface SymptomAnswer {
 }
 
 export interface TriageResult {
-  level: 'emergency' | 'urgent' | 'moderate' | 'mild';
+  level: 'emergency' | 'urgent' | 'moderate' | 'mild' | null;
   confidence: 'high' | 'medium' | 'low'; 
   recommendation: string;
   reasoning: string[];
@@ -29,6 +34,7 @@ export interface TriageResult {
   nearestFacility?: string;
   auditId?: string;
   disclaimers?: string[];
+  productHold: boolean;
 }
 
 export class ClinicalTriageEngine {
@@ -40,11 +46,19 @@ export class ClinicalTriageEngine {
     chatTranscript: string,
     language: 'sw' | 'en'
   ): Promise<TriageResult> {
+    if (!isClinicalTriageEnabled()) {
+      return this.getHeldResult(language);
+    }
+
     try {
       const localResult = await performLocalTriage(chatTranscript);
+      if (localResult.productHold || localResult.level == null) {
+        return this.getHeldResult(language);
+      }
       
       const resultData: TriageResult = {
         ...localResult,
+        productHold: false,
         disclaimers: this.getDisclaimers(language, localResult.level),
         nearestFacility: 'Mwananyamala Hospital - 2.3 km', // Mocked for now
         auditId: `triage_ai_${Date.now()}`
@@ -86,6 +100,20 @@ export class ClinicalTriageEngine {
     }
   }
 
+  private static getHeldResult(language: 'sw' | 'en'): TriageResult {
+    return {
+      level: null,
+      confidence: 'low',
+      recommendation: PRODUCT_HOLD_NOTICE[language],
+      reasoning: [],
+      redFlags: [],
+      escalationRequired: false,
+      callEmergency: false,
+      productHold: true,
+      disclaimers: [PRODUCT_HOLD_NOTICE.en, PRODUCT_HOLD_NOTICE.sw],
+    };
+  }
+
   private static getFallbackResult(language: 'sw' | 'en'): TriageResult {
     return {
       level: 'urgent',
@@ -95,6 +123,7 @@ export class ClinicalTriageEngine {
       redFlags: ['System Failure'],
       escalationRequired: true,
       callEmergency: false,
+      productHold: false,
       disclaimers: this.getDisclaimers(language, 'urgent')
     };
   }
@@ -117,8 +146,12 @@ export class ClinicalTriageEngine {
       },
     };
     
-    const result = [...disclaimers[language].common];
-    if (level === 'emergency' || level === 'urgent') {
+    const result = [
+      UNVALIDATED_TRIAGE_BANNER.en,
+      UNVALIDATED_TRIAGE_BANNER.sw,
+      ...disclaimers[language].common,
+    ];
+    if (level === 'emergency') {
       result.push(...disclaimers[language].emergency);
     }
     return result;

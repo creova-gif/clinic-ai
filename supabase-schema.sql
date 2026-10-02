@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS maternal_care (
   pregnancy_start_date DATE NOT NULL,
   estimated_due_date DATE NOT NULL,
   current_week INTEGER NOT NULL,
-  risk_level TEXT NOT NULL CHECK (risk_level IN ('low', 'medium', 'high')),
+  risk_level TEXT NOT NULL CHECK (risk_level IN ('low', 'medium', 'high', 'urgent', 'emergency')),
   vital_signs JSONB[] NOT NULL DEFAULT '{}',
   checkups JSONB[] NOT NULL DEFAULT '{}',
   notes TEXT,
