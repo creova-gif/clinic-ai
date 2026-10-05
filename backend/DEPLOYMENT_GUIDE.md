@@ -331,12 +331,9 @@ https://account.africastalking.com/apps/dashboard
 
 #### **1. MongoDB Atlas (Cloud)**
 ```bash
-# Create free cluster at https://cloud.mongodb.com
-# Get connection string
-# Example: mongodb+srv://user:pass@cluster.mongodb.net/afyaai
-
-# Update .env
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/afyaai
+# Create a free cluster at https://cloud.mongodb.com
+# Placeholder only. Do not commit a username, password, or cluster host.
+# MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/<db>
 ```
 
 #### **2. Local MongoDB**
