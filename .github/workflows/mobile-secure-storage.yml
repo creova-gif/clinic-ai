@@ -22,7 +22,9 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       # Vendored copy must match the source of truth in kazi-ai.
-      # Non-blocking until kazi-ai/secure-storage lands on kazi-ai main.
+      # NON-BLOCKING FOR NOW: check-sync.sh gets HTTP 404 until kazi-ai#16
+      # merges (secure-storage/ is not on kazi-ai main yet). Once kazi-ai#16
+      # is merged, delete the continue-on-error line to make this blocking.
       - name: secure-storage in sync with kazi-ai
         continue-on-error: true
         run: sh secure-storage/check-sync.sh main

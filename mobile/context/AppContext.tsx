@@ -1,3 +1,4 @@
+import { View, Text, Pressable } from 'react-native';
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { createSecureStorage } from '../secure-storage';
 
@@ -20,8 +21,11 @@ interface AppContextValue {
   isOffline: boolean;
   userData: UserData | null;
   setUserData: (data: UserData) => void;
-  logout: () => void;
+  /** Wipes all on-device data. Rejects if the wipe was incomplete; callers must tell the user. */
+  logout: () => Promise<void>;
   isLoading: boolean;
+  /** True when saved data could not be read (saves are blocked) or a save failed. */
+  storageError: boolean;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -38,9 +42,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isOffline, setIsOffline] = useState(false);
   const [userData, setUserDataState] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     (async () => {
+      setLoadError(false);
       try {
         const stored = await storage.get('user');
         if (stored) {
@@ -49,17 +57,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setUserRoleState(parsed.role);
           setLanguageState(parsed.language || 'sw');
         }
-      } catch (_) {}
+      } catch (_) {
+        // Fail closed: do not fall through to onboarding, which would save a
+        // new profile over the real (unreadable) one.
+        setLoadError(true);
+        return;
+      }
       setIsLoading(false);
     })();
-  }, []);
+  }, [loadAttempt]);
+
+  // Saves are blocked after a failed load; failures surface via storageError.
+  const persist = (data: UserData) => {
+    if (loadError || isLoading) return;
+    storage.set('user', JSON.stringify(data)).then(() => setSaveError(false), () => setSaveError(true));
+  };
 
   const setUserRole = (role: UserRole) => {
     setUserRoleState(role);
     if (userData) {
       const updated = { ...userData, role };
       setUserDataState(updated);
-      storage.set('user', JSON.stringify(updated)).catch(() => {});
+      persist(updated);
     }
   };
 
@@ -68,7 +87,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (userData) {
       const updated = { ...userData, language: lang };
       setUserDataState(updated);
-      storage.set('user', JSON.stringify(updated)).catch(() => {});
+      persist(updated);
     }
   };
 
@@ -76,19 +95,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUserDataState(data);
     setUserRoleState(data.role);
     setLanguageState(data.language);
-    storage.set('user', JSON.stringify(data)).catch(() => {});
+    persist(data);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Serialised with pending saves inside secure-storage; errors propagate.
+    await storage.wipe();
     setUserRoleState(null);
     setUserDataState(null);
-    storage.wipe().catch(() => {});
   };
 
   const value = useMemo(() => ({
     userRole, setUserRole, language, setLanguage,
     isOffline, userData, setUserData, logout, isLoading,
-  }), [userRole, language, isOffline, userData, isLoading]);
+    storageError: loadError || saveError,
+  }), [userRole, language, isOffline, userData, isLoading, loadError, saveError]);
+
+  if (loadError) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 16, textAlign: 'center', marginBottom: 16 }}>
+          Hatukuweza kufungua taarifa zako zilizohifadhiwa. Hakuna kilichobadilishwa au kufutwa.
+          {'\n\n'}We couldn't open your saved information. Nothing has been changed or deleted.
+        </Text>
+        <Pressable accessibilityRole="button" onPress={() => setLoadAttempt(a => a + 1)} style={{ padding: 12 }}>
+          <Text style={{ fontSize: 16, fontWeight: '600' }}>Jaribu tena / Try again</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

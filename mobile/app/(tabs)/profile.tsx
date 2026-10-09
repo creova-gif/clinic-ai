@@ -25,7 +25,17 @@ export default function ProfileScreen() {
         {
           text: language === 'sw' ? 'Toka' : 'Logout',
           style: 'destructive',
-          onPress: () => { logout(); router.replace('/onboarding'); },
+          onPress: () => {
+            logout().then(
+              () => router.replace('/onboarding'),
+              () => Alert.alert(
+                language === 'sw' ? 'Imeshindwa kufuta data' : 'Could not delete your data',
+                language === 'sw'
+                  ? 'Baadhi ya taarifa hazikuweza kufutwa kwenye kifaa hiki. Tafadhali jaribu tena.'
+                  : 'Some of your information could not be deleted from this device. Please try again.',
+              ),
+            );
+          },
         },
       ]
     );
