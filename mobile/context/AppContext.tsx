@@ -1,4 +1,8 @@
-import { View, Text, Pressable } from 'react-native';
+import { View } from 'react-native';
+import { router } from 'expo-router';
+import { StorageErrorScreen, SaveErrorBanner } from '../components/StorageErrorScreen';
+import { createStatePersistence } from './statePersistence';
+import { errorCode, STATE_UNREADABLE } from './storageRecovery';
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { createSecureStorage } from '../secure-storage';
 
@@ -35,6 +39,8 @@ const LEGACY_STORAGE_KEY = 'afyacare_user';
 // (SecureStore / AES-GCM), never plaintext AsyncStorage. The legacy plaintext
 // copy is migrated, verified and deleted on first launch (mobile audit 2026-10-09).
 const storage = createSecureStorage({ namespace: 'afyacare', legacyKeys: { user: LEGACY_STORAGE_KEY } });
+// A failed load blocks all saves (they set saveError instead of being dropped).
+const persistence = createStatePersistence(storage, 'user');
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRoleState] = useState<UserRole>(null);
@@ -42,35 +48,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isOffline, setIsOffline] = useState(false);
   const [userData, setUserDataState] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [goOnboarding, setGoOnboarding] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     (async () => {
-      setLoadError(false);
+      setLoadError(null);
+      let stored: string | null;
       try {
-        const stored = await storage.get('user');
-        if (stored) {
-          const parsed: UserData = JSON.parse(stored);
-          setUserDataState(parsed);
-          setUserRoleState(parsed.role);
-          setLanguageState(parsed.language || 'sw');
-        }
-      } catch (_) {
+        stored = await persistence.load();
+      } catch (e) {
         // Fail closed: do not fall through to onboarding, which would save a
         // new profile over the real (unreadable) one.
-        setLoadError(true);
+        setLoadError(errorCode(e));
         return;
+      }
+      if (stored) {
+        let parsed: UserData;
+        try {
+          parsed = JSON.parse(stored);
+        } catch {
+          setLoadError(STATE_UNREADABLE);
+          return;
+        }
+        setUserDataState(parsed);
+        setUserRoleState(parsed.role);
+        setLanguageState(parsed.language || 'sw');
       }
       setIsLoading(false);
     })();
   }, [loadAttempt]);
 
-  // Saves are blocked after a failed load; failures surface via storageError.
+  // After a confirmed reset, go to onboarding once the navigator is mounted.
+  useEffect(() => {
+    if (!goOnboarding) return;
+    setGoOnboarding(false);
+    const t = setTimeout(() => { try { router.replace('/onboarding'); } catch { /* index route redirects anyway */ } }, 0);
+    return () => clearTimeout(t);
+  }, [goOnboarding]);
+
+  // Saves blocked by a failed/pending load, or failing, set saveError (never dropped silently).
   const persist = (data: UserData) => {
-    if (loadError || isLoading) return;
-    storage.set('user', JSON.stringify(data)).then(() => setSaveError(false), () => setSaveError(true));
+    persistence.save(JSON.stringify(data)).then(() => setSaveError(false), () => setSaveError(true));
   };
 
   const setUserRole = (role: UserRole) => {
@@ -100,7 +121,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     // Serialised with pending saves inside secure-storage; errors propagate.
-    await storage.wipe();
+    await persistence.clear();
     setUserRoleState(null);
     setUserDataState(null);
   };
@@ -108,24 +129,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({
     userRole, setUserRole, language, setLanguage,
     isOffline, userData, setUserData, logout, isLoading,
-    storageError: loadError || saveError,
+    storageError: loadError !== null || saveError,
   }), [userRole, language, isOffline, userData, isLoading, loadError, saveError]);
 
   if (loadError) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 16, textAlign: 'center', marginBottom: 16 }}>
-          Hatukuweza kufungua taarifa zako zilizohifadhiwa. Hakuna kilichobadilishwa au kufutwa.
-          {'\n\n'}We couldn't open your saved information. Nothing has been changed or deleted.
-        </Text>
-        <Pressable accessibilityRole="button" onPress={() => setLoadAttempt(a => a + 1)} style={{ padding: 12 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600' }}>Jaribu tena / Try again</Text>
-        </Pressable>
-      </View>
+      <StorageErrorScreen
+        code={loadError}
+        onRetry={() => setLoadAttempt(a => a + 1)}
+        onReset={async () => {
+          // User confirmed permanent deletion: wipe, then onboarding.
+          try {
+            await persistence.clear(); // storage.wipe() + re-enable saves
+          } catch (e) {
+            setLoadError(errorCode(e));
+            throw e;
+          }
+          setUserRoleState(null);
+          setUserDataState(null);
+          setLoadError(null);
+          setIsLoading(false);
+          setGoOnboarding(true);
+        }}
+      />
     );
   }
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {saveError ? (
+        <View style={{ flex: 1 }}>
+          <SaveErrorBanner />
+          {children}
+        </View>
+      ) : children}
+    </AppContext.Provider>
+  );
 }
 
 export function useApp() {
