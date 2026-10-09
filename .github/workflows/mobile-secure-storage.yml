@@ -1,0 +1,28 @@
+name: mobile-secure-storage
+on:
+  pull_request:
+    paths: ['mobile/**', '.github/workflows/mobile-secure-storage.yml']
+  push:
+    branches: [main]
+    paths: ['mobile/**']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # --legacy-peer-deps: mobile/package.json already mixes Expo 54 and 55
+      # majors (pre-existing, see mobile audit 2026-10-09 §3.4).
+      - run: npm ci --legacy-peer-deps
+      - run: npm run typecheck
+      - run: npm test
+      # Vendored copy must match the source of truth in kazi-ai.
+      # Non-blocking until kazi-ai/secure-storage lands on kazi-ai main.
+      - name: secure-storage in sync with kazi-ai
+        continue-on-error: true
+        run: sh secure-storage/check-sync.sh main

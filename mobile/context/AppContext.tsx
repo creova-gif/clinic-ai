@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createSecureStorage } from '../secure-storage';
 
 export type UserRole = 'patient' | 'chw' | 'clinician' | 'admin' | null;
 export type Language = 'sw' | 'en';
@@ -26,7 +26,11 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-const STORAGE_KEY = 'afyacare_user';
+const LEGACY_STORAGE_KEY = 'afyacare_user';
+// Health profile is sensitive personal data: stored via secure-storage
+// (SecureStore / AES-GCM), never plaintext AsyncStorage. The legacy plaintext
+// copy is migrated, verified and deleted on first launch (mobile audit 2026-10-09).
+const storage = createSecureStorage({ namespace: 'afyacare', legacyKeys: { user: LEGACY_STORAGE_KEY } });
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRoleState] = useState<UserRole>(null);
@@ -38,7 +42,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        const stored = await storage.get('user');
         if (stored) {
           const parsed: UserData = JSON.parse(stored);
           setUserDataState(parsed);
@@ -55,7 +59,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (userData) {
       const updated = { ...userData, role };
       setUserDataState(updated);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      storage.set('user', JSON.stringify(updated)).catch(() => {});
     }
   };
 
@@ -64,7 +68,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (userData) {
       const updated = { ...userData, language: lang };
       setUserDataState(updated);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      storage.set('user', JSON.stringify(updated)).catch(() => {});
     }
   };
 
@@ -72,13 +76,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUserDataState(data);
     setUserRoleState(data.role);
     setLanguageState(data.language);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)).catch(() => {});
+    storage.set('user', JSON.stringify(data)).catch(() => {});
   };
 
   const logout = () => {
     setUserRoleState(null);
     setUserDataState(null);
-    AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    storage.wipe().catch(() => {});
   };
 
   const value = useMemo(() => ({
